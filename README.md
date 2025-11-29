@@ -59,6 +59,7 @@ graph TD
     
     Lambda -->|"Search"| DMM
     Lambda -->|"Read/Write (User Data)"| Postgres
+```
 
 ## 🛠 技術スタック
 
