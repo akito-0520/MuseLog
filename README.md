@@ -16,10 +16,6 @@
 
 -----
 
-# 🏗 System Architecture: Muse Log
-
-**Muse Log** は、AWSサーバーレスアーキテクチャ（Go言語）と Supabase（BaaS）を組み合わせた、高パフォーマンスかつコスト効率に優れたWebアプリケーションです。
-
 ## 🗺 システム構成図
 
 ```mermaid
