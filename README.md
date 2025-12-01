@@ -79,8 +79,8 @@ graph TD
     Lambda -.->|Log| CloudWatch
     
     %% 4. 外部連携
-    Lambda -->>|Search| DMM
-    Lambda -->>|"Verify & Query"| SupaDB
+    Lambda ->>|Search| DMM
+    Lambda ->>|"Verify & Query"| SupaDB
 ```
 
 ## 🧩 構成要素と役割
