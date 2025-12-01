@@ -67,11 +67,12 @@ graph TD
     %% --- データフロー ---
     
     %% 1. 画面表示
-    User -->|1. Access & Login| Amplify
-    Amplify <-->|"2. Auth Token (JWT)"| SupaAuth
+    User -->|"1. Access & Login"| Amplify
+    Amplify -->|"2. Auth Request"| SupaAuth
+    SupaAuth -->|"3. Issue JWT"| Amplify
     
     %% 2. APIリクエスト
-    Amplify -->|"3. Request + JWT"| APIGW
+    Amplify -->|"4. Request + JWT"| APIGW
     APIGW -->|Route| Lambda
     
     %% 3. 処理実行
@@ -79,8 +80,8 @@ graph TD
     Lambda -.->|Log| CloudWatch
     
     %% 4. 外部連携
-    Lambda ->>|Search| DMM
-    Lambda ->>|"Verify & Query"| SupaDB
+    Lambda -->|Search| DMM
+    Lambda -->|"Verify & Query"| SupaDB
 ```
 
 ## 🧩 構成要素と役割
