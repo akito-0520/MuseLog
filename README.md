@@ -14,64 +14,122 @@
 - **High Performance**: Go言語による爆速Lambdaバックエンド。
 - **Privacy First**: 収集するのはメールアドレスのみ。検索履歴や閲覧データは厳重に保護されます。
 
-## 🏗 アーキテクチャ
+-----
 
-AWS Lambda (Go) と Supabase (Auth & DB) を連携させたハイブリッド構成です。
+# 🏗 System Architecture: Muse Log
+
+**Muse Log** は、AWSサーバーレスアーキテクチャ（Go言語）と Supabase（BaaS）を組み合わせた、高パフォーマンスかつコスト効率に優れたWebアプリケーションです。
+
+## 🗺 システム構成図
 
 ```mermaid
 graph TD
-    User((User))
-    
-    subgraph "Frontend (AWS Amplify)"
-        NextJS["Next.js App (App Router)"]
+    %% ユーザー層
+    User((User / Browser))
+
+    %% フロントエンド (AWS)
+    subgraph "Frontend Hosting (AWS)"
+        Amplify[AWS Amplify<br/>(Next.js App)]
+        style Amplify fill:#FF9900,stroke:#232F3E,color:white
     end
 
-    subgraph "Supabase Platform"
-        SupabaseAuth["Supabase Auth<br/>(JWT Management)"]
-        Postgres[("PostgreSQL DB")]
-    end
+    %% バックエンド (AWS Serverless)
+    subgraph "Backend Infrastructure (AWS)"
+        APIGW[API Gateway<br/>(HTTP API)]
+        style APIGW fill:#A166FF,stroke:#232F3E,color:white
 
-    subgraph "AWS Cloud (Backend)"
-        APIGW["API Gateway (HTTP API)"]
-        
-        subgraph "Go Runtime"
-            Lambda["Lambda Function<br/>(Business Logic)"]
-            Middleware["Middleware<br/>(JWT Verify)"]
+        subgraph "Compute (Go)"
+            Lambda[AWS Lambda<br/>(Go Runtime)]
+            style Lambda fill:#FF9900,stroke:#232F3E,color:white
         end
+
+        SSM[SSM Parameter Store<br/>(Secret Keys)]
+        style SSM fill:#FF4F8B,stroke:#232F3E,color:white
         
-        SSM["SSM Parameter Store<br/>(API Keys)"]
+        CloudWatch[CloudWatch<br/>(Logs)]
+        style CloudWatch fill:#FF4F8B,stroke:#232F3E,color:white
     end
 
+    %% 外部SaaS (Supabase)
+    subgraph "Supabase Platform"
+        SupaAuth[Supabase Auth<br/>(Login / JWT)]
+        SupaDB[(PostgreSQL DB<br/>User Data)]
+        style SupaAuth fill:#3ECF8E,stroke:#333,color:white
+        style SupaDB fill:#3ECF8E,stroke:#333,color:white
+    end
+
+    %% 外部データソース
     subgraph "External API"
-        DMM["DMM / FANZA API"]
+        DMM[DMM / FANZA API]
+        style DMM fill:#DDD,stroke:#333,color:black
     end
 
-    %% Auth Flow
-    User -->|"Login / Sign up"| NextJS
-    NextJS -->|"Auth Request"| SupabaseAuth
-    SupabaseAuth -->|"Return JWT"| NextJS
-
-    %% Data Flow
-    NextJS -->|"API Request (w/ Token)"| APIGW
-    APIGW --> Lambda
-    Lambda --> Middleware
-    Middleware -.->|"Verify Signature"| SupabaseAuth
+    %% --- データフロー ---
     
-    Lambda -->|"Search"| DMM
-    Lambda -->|"Read/Write (User Data)"| Postgres
+    %% 1. 画面表示
+    User -->|1. Access & Login| Amplify
+    Amplify <-->|2. Auth Token (JWT)| SupaAuth
+    
+    %% 2. APIリクエスト
+    Amplify -->|3. Request + JWT| APIGW
+    APIGW -->|Route| Lambda
+    
+    %% 3. 処理実行
+    Lambda -->|Get Secrets| SSM
+    Lambda -.->|Log| CloudWatch
+    
+    %% 4. 外部連携
+    Lambda -->>|Search| DMM
+    Lambda -->>|Verify & Query| SupaDB
 ```
 
-## 🛠 技術スタック
+## 🧩 構成要素と役割
 
-| カテゴリ | 技術選定 | 役割 |
+### 1\. Frontend & Entry Point
+
+| サービス | 技術スタック | 役割・選定理由 |
 | :--- | :--- | :--- |
-| **Frontend** | **Next.js 14+** (App Router) | UI / SSR / OGP生成 |
-| **Styling** | **Tailwind CSS** + **shadcn/ui** | デザインシステム |
-| **Backend** | **Go** (AWS Lambda) | ビジネスロジック / API処理 |
-| **Infrastructure** | **AWS CDK** (Go) | IaC (インフラのコード化) |
-| **Database** | **Supabase** (PostgreSQL) | ユーザーデータ / レビュー保存 |
-| **Auth** | **Supabase Auth** | 認証 (Email/Pass, Social Login) |
-| **API** | **DMM API** | 女優・作品データの検索 |
+| **AWS Amplify** | **Next.js** | **フロントエンドのホスティング**。<br>GitHubへのプッシュを検知して自動デプロイを行う。裏側でCloudFrontが動作し、コンテンツを高速配信する。 |
+| **API Gateway** | **HTTP API** | **バックエンドへの入り口**。<br>フロントエンドからのリクエストを受け付け、Lambdaへルーティングする。CORS制御や流量制限も担う。 |
+
+### 2\. Backend (Compute)
+
+| サービス | 技術スタック | 役割・選定理由 |
+| :--- | :--- | :--- |
+| **AWS Lambda** | **Go (1.x / al2023)** | **ビジネスロジックの中枢**。<br>Dockerコンテナではなく、\*\*Goバイナリ（Zip）\*\*としてデプロイすることで、コールドスタートを最小限に抑える。<br>DMM APIの呼び出しやDB操作を行う。 |
+| **SSM Parameter Store** | - | **機密情報の金庫**。<br>DMM APIキー、Supabase接続文字列、JWTシークレットなどを暗号化して管理する。 |
+| **CloudWatch** | - | **監視ログ**。<br>Lambdaの実行ログ（標準出力・エラー）を自動的に収集・保存する。 |
+
+### 3\. Database & Auth (SaaS)
+
+| サービス | 技術スタック | 役割・選定理由 |
+| :--- | :--- | :--- |
+| **Supabase Auth** | - | **認証基盤**。<br>ユーザー管理（メール/パスワード、SNSログイン）を提供し、アクセストークン（JWT）を発行する。 |
+| **Supabase DB** | **PostgreSQL** | **リレーショナルデータベース**。<br>ユーザーのプロフィール、お気に入りリスト、タグ情報などを保存。<br>Lambdaからの接続には内蔵の\*\*Connection Pooler (Supavisor)\*\*を使用する。 |
+
+### 4\. External
+
+| サービス | 役割 |
+| :--- | :--- |
+| **DMM API** | 女優情報、作品情報、パッケージ画像の取得元。 |
+
+## 🚀 デプロイ戦略
+
+フロントエンドとバックエンドは完全に分離してデプロイします。
+
+| 対象 | デプロイ先 | 手法 |
+| :--- | :--- | :--- |
+| **Frontend** (Next.js) | **AWS Amplify** | **Git Push** (GitHub連携による自動CI/CD) |
+| **Backend** (Go) | **AWS Lambda** | **AWS CDK** (`cdk deploy` コマンドでZipアップロード) |
+
+## 🐳 Dockerの使用方針
+
+本番環境（AWS）ではDockerを使用しませんが、開発効率化のためにローカルでのみ使用します。
+
+  - **本番 (Production):** Docker不使用。Goバイナリを直接Lambdaで実行。
+  - **開発 (Local):** `docker-compose` を使用して、Supabase (DB) のモックやホットリロード環境を構築。
+
+-----
 
 ⚠️ 免責事項 (Disclaimer)
 本アプリは個人の技術研究を目的とした非公式アプリです。 データの取得には [DMM.com](https://affiliate.dmm.com/api/) WebサービスAPI を利用しています。
@@ -82,4 +140,4 @@ graph TD
 
 本アプリの利用により生じた損害について、開発者は一切の責任を負いません。
 
-© 2025 Muse Log Project
+*Created by Muse Log Architecture Team*
