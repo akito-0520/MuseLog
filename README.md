@@ -29,38 +29,38 @@ graph TD
 
     %% フロントエンド (AWS)
     subgraph "Frontend Hosting (AWS)"
-        Amplify[AWS Amplify<br/>(Next.js App)]
+        Amplify["AWS Amplify<br/>(Next.js App)"]
         style Amplify fill:#FF9900,stroke:#232F3E,color:white
     end
 
     %% バックエンド (AWS Serverless)
     subgraph "Backend Infrastructure (AWS)"
-        APIGW[API Gateway<br/>(HTTP API)]
+        APIGW["API Gateway<br/>(HTTP API)"]
         style APIGW fill:#A166FF,stroke:#232F3E,color:white
 
         subgraph "Compute (Go)"
-            Lambda[AWS Lambda<br/>(Go Runtime)]
+            Lambda["AWS Lambda<br/>(Go Runtime)"]
             style Lambda fill:#FF9900,stroke:#232F3E,color:white
         end
 
-        SSM[SSM Parameter Store<br/>(Secret Keys)]
+        SSM["SSM Parameter Store<br/>(Secret Keys)"]
         style SSM fill:#FF4F8B,stroke:#232F3E,color:white
         
-        CloudWatch[CloudWatch<br/>(Logs)]
+        CloudWatch["CloudWatch<br/>(Logs)"]
         style CloudWatch fill:#FF4F8B,stroke:#232F3E,color:white
     end
 
     %% 外部SaaS (Supabase)
     subgraph "Supabase Platform"
-        SupaAuth[Supabase Auth<br/>(Login / JWT)]
-        SupaDB[(PostgreSQL DB<br/>User Data)]
+        SupaAuth["Supabase Auth<br/>(Login / JWT)"]
+        SupaDB[("PostgreSQL DB<br/>User Data")]
         style SupaAuth fill:#3ECF8E,stroke:#333,color:white
         style SupaDB fill:#3ECF8E,stroke:#333,color:white
     end
 
     %% 外部データソース
     subgraph "External API"
-        DMM[DMM / FANZA API]
+        DMM["DMM / FANZA API"]
         style DMM fill:#DDD,stroke:#333,color:black
     end
 
@@ -68,19 +68,19 @@ graph TD
     
     %% 1. 画面表示
     User -->|1. Access & Login| Amplify
-    Amplify <-->|2. Auth Token (JWT)| SupaAuth
+    Amplify <-->|"2. Auth Token (JWT)"| SupaAuth
     
     %% 2. APIリクエスト
-    Amplify -->|3. Request + JWT| APIGW
+    Amplify -->|"3. Request + JWT"| APIGW
     APIGW -->|Route| Lambda
     
     %% 3. 処理実行
-    Lambda -->|Get Secrets| SSM
+    Lambda -->|"Get Secrets"| SSM
     Lambda -.->|Log| CloudWatch
     
     %% 4. 外部連携
     Lambda -->>|Search| DMM
-    Lambda -->>|Verify & Query| SupaDB
+    Lambda -->>|"Verify & Query"| SupaDB
 ```
 
 ## 🧩 構成要素と役割
