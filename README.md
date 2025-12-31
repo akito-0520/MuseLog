@@ -140,7 +140,7 @@ erDiagram
         smallint waist
         smallint hip
         smallint height
-        varchar(1) cup
+        varchar(5) cup
         datetime created_at "登録日"
         datetime updated_at "更新日"
     }
