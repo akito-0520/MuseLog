@@ -1,0 +1,64 @@
+name: 汎用タスク
+description: その他の課題はこちら
+title: '[General] '
+body:
+  - type: textarea
+    id: overview
+    attributes:
+      label: 概要
+      description: |
+        何をしたいのか、何が起きているのかを簡潔に記載してください。
+    validations:
+      required: true
+  - type: textarea
+    id: objective
+    attributes:
+      label: 目的・期待する成果
+      description: このissueで解決したい目的や期待する成果を記載してください。
+    validations:
+      required: true
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景・前提
+      description: 取り組む背景や前提情報があれば記載してください。
+    validations:
+      required: false
+  - type: textarea
+    id: scope
+    attributes:
+      label: スコープ / 対象外
+      description: 対象範囲と対象外を明確にしてください。
+    validations:
+      required: false
+  - type: textarea
+    id: approach
+    attributes:
+      label: 方針・アイデア
+      description: 検討中の方針や代替案があれば記載してください。
+    validations:
+      required: false
+  - type: textarea
+    id: tasks
+    attributes:
+      label: やること
+      description: このissueで対応する作業を列挙してください。
+      value: |
+        - [ ] 
+        - [ ] 
+    validations:
+      required: false
+  - type: textarea
+    id: done
+    attributes:
+      label: 完了条件
+      description: 完了と判断するための条件を記載してください。
+    validations:
+      required: false
+  - type: textarea
+    id: supplement
+    attributes:
+      label: 補足
+      description: 共有したい情報があれば記載してください。
+    validations:
+      required: false
