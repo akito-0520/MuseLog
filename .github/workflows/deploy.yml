@@ -3,7 +3,7 @@ name: CD Pipeline
 on:
     workflow_dispatch:
     push:
-        branches: [main, 22-feature-setup-cicd]
+        branches: [main]
         paths:
           - 'backend/**'
           - 'docker-compose.yml'
