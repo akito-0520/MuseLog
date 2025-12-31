@@ -1,6 +1,5 @@
 name: 汎用タスク
 description: その他の課題はこちら
-title: '[General] '
 body:
   - type: textarea
     id: overview
