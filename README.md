@@ -111,6 +111,7 @@ graph TD
 | **DMM API** | 女優情報、作品情報、パッケージ画像の取得元。 |
 
 ## 📊 データ構造（DBスキーマ）
+
 アプリケーションの核となるデータモデルは、公開情報（actresses）と個人情報（reviews, tags）を明確に分離した正規化構造を採用しています。
 
 ```mermaid
@@ -126,42 +127,48 @@ erDiagram
         string nickname
         string email "Unique"
         string password_digest
-        datetime created_at
-        datetime updated_at
+        datetime created_at "登録日"
+        datetime updated_at "更新日"
     }
 
     actresses {
         bigint id  PK
-        string api_id "Unique, API側のID"
         string name
         string image_url "サムネイル画像のURL"
         string fanza_url "公式/アフィリエイトURL"
-        string body_info "スリーサイズ等の身体情報（JSON）"
-        datetime created_at "データ作成日時"
+        smallint bust
+        smallint waist
+        smallint hip
+        datetime created_at "登録日"
+        datetime updated_at "更新日"
     }
 
     reviews {
         bigint id PK
         bigint user_id FK
-        bigint actress_id	FK
-        int rating "1〜5の個人的評価"
-        string status "推し/視聴済などの状態"
-        string favorite_video	"お気に入りの動画タイトル/URL"
+        bigint actress_id FK
+        smallint rating "1〜5の個人的評価"
+        string favorite_video_title "お気に入りの動画タイトル"
+        string favorite_video_url "お気に入りの動画URL"
         string memo
-        datetime created_at	"登録日"
-        datetime updated_at	"更新日"
+        datetime created_at "登録日"
+        datetime updated_at "更新日"
     }
 
     tags {
         bigint id PK
         bigint user_id FK
         string name
+        datetime created_at "登録日"
+        datetime updated_at "更新日"
     }
 
     review_tags {
         bigint id PK
         bigint review_id FK
         bigint tag_id FK
+        datetime created_at "登録日"
+        datetime updated_at "更新日"
     }
 ```
 
