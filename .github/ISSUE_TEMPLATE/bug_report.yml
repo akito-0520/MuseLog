@@ -41,3 +41,6 @@ body:
     id: supplement
     attributes:
       label: 補足
+      description: |
+        補足情報があれば記載してください。
+        ログ、エラーメッセージ、設定内容など、問題の解決に役立ちそうな情報があればご記入ください。
