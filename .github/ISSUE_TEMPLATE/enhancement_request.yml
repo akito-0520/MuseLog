@@ -26,3 +26,4 @@ body:
     id: supplement
     attributes:
       label: 補足
+      description: 追記したい情報や共有事項があれば記載してください。
