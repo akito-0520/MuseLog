@@ -14,6 +14,7 @@ func main() {
 		port = "8000"
 	}
 
+
 	// ハンドラ定義
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
