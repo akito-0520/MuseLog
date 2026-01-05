@@ -1,30 +1,27 @@
 package main
 
 import (
-	"encoding/json"
+	"backend/app/controllers"
 	"fmt"
-	"net/http"
 	"os"
+
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
-	// ポート設定（デフォルト8000）
+	// ポート設定（デフォルト8080）
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8000"
+		port = ":8080"
 	}
 
-	// ハンドラ定義
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "success",
-			"message": "Go Backend is running via GitHub Actions!",
-		})
-		fmt.Println("Request handled")
-	})
+	// Echoインスタンスの作成
+	e := echo.New()
+
+	// エンドポイントの定義
+	e.GET("/", controllers.Hello)
 
 	// 起動
 	fmt.Printf("Server listening on port %s...\n", port)
-	http.ListenAndServe(":"+port, nil)
+	e.Logger.Fatal(e.Start(port))
 }
