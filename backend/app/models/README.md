@@ -41,8 +41,8 @@ model/
 
 ### 関数命名規則
 
-- CRUD操作: Get, Create, Update, Delete
-- 複数取得: GetAll, GetUsersByCondition
+- CRUD操作: GetUser, CreateUser, UpdateUser, DeleteUser
+- 複数取得: GetUsers, GetUsersByCondition
 - その他: FindUserByID など具体的な名前
 
 ## 実装パターン
@@ -60,16 +60,14 @@ type User struct {
 ### CRUD操作の実装
 
 ```go
-// レシーバメソッド
-func (u *User) Save(db *sql.DB) error { ... }
-func (u *User) Delete(db *sql.DB) error { ... }
-
-// 構造体に紐づかない関数
-func FindUserByID(db *sql.DB, id int) (*User, error) { ... }
+func SaveUser(db *sql.DB, user *User) error { ... }
+func DeleteUser(db *sql.DB, userID int) error { ... }
 ```
 
 ## 使用方法
 
 ## 注意事項
+
+構造体のレシーバメソッドで書くパターンもあるが今回は関数で記述する
 
 ## 関連ドキュメント
