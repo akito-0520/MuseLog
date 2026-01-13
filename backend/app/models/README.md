@@ -45,8 +45,90 @@ models/
 - 複数取得: GetUsers, GetUsersByCondition
 - その他: FindUserByID など具体的な名前
 
+## 実装パターン
+
+### 構造体の定義
+
+```go
+type User struct {
+    ID        int       `json:"id"`
+    Name      string    `json:"name"`
+    Email     string    `json:"email"`
+    CreatedAt time.Time `json:"created_at"`
+    UpdatedAt time.Time `json:"updated_at"`
+}
+```
+
+### Contextからのdb取得
+
+```go
+// db.go にヘルパー関数を定義
+func GetDB(ctx context.Context) *gorm.DB {
+    return ctx.Value("db").(*gorm.DB)
+}
+```
+
+### CRUD操作の実装
+
+```go
+// 単体取得
+func GetUser(ctx context.Context, id int) (*User, error) {
+    db := GetDB(ctx)
+    var user User
+    if err := db.First(&user, id).Error; err != nil {
+        return nil, err
+    }
+    return &user, nil
+}
+
+// 一覧取得
+func GetUsers(ctx context.Context) ([]User, error) {
+    db := GetDB(ctx)
+    var users []User
+    if err := db.Find(&users).Error; err != nil {
+        return nil, err
+    }
+    return users, nil
+}
+
+// 作成
+func CreateUser(ctx context.Context, user *User) error {
+    db := GetDB(ctx)
+    return db.Create(user).Error
+}
+
+// 更新
+func UpdateUser(ctx context.Context, user *User) error {
+    db := GetDB(ctx)
+    return db.Save(user).Error
+}
+
+// 削除
+func DeleteUser(ctx context.Context, id int) error {
+    db := GetDB(ctx)
+    return db.Delete(&User{}, id).Error
+}
+```
+
+### 条件付き取得
+
+```go
+func GetUserByEmail(ctx context.Context, email string) (*User, error) {
+    db := GetDB(ctx)
+    var user User
+    if err := db.Where("email = ?", email).First(&user).Error; err != nil {
+        return nil, err
+    }
+    return &user, nil
+}
+```
+
 ## 注意事項
 
-アクティブレコードみたいなパターンもあるが今回はリポジトリパターンでDB操作関数を記述する
+- アクティブレコードパターンではなくリポジトリパターンでDB操作関数を記述する
+- Controllerから直接呼び出さない（Serviceを経由する）
 
 ## 関連ドキュメント
+
+- [Controller層](../controllers/README.md)
+- [Service層](../services/README.md)
