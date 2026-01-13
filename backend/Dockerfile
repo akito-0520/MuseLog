@@ -17,7 +17,7 @@ COPY --from=builder /app/server .
 # Ensure the binary is owned by the non-root user
 RUN chown serveruser:servergroup /home/server/server
 
-EXPOSE 8000
+EXPOSE 8080
 
 # Run the server as the non-root user
 USER serveruser
