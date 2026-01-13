@@ -4,7 +4,7 @@
 
 ## プロジェクト概要
 
-このプロジェクトはGo言語で書かれたバックエンドサービスです。Webフレームワークには[Echo](https.github.com/labstack/echo)を利用しています。Dockerコンテナとして実行されるように構成されています。
+このプロジェクトはGo言語で書かれたバックエンドサービスです。Webフレームワークには[Echo](https://github.com/labstack/echo)を利用しています。Dockerコンテナとして実行されるように構成されています。
 
 アプリケーションは`controllers`、`middleware`、`models`、`services`といったディレクトリ構成になっており、一般的なWebアプリケーションのアーキテクチャを採用しています。
 
