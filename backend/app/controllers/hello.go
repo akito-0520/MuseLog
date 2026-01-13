@@ -7,13 +7,13 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type Response struct {
+type HelloResponse struct {
 	Message string `json:"message"`
 }
 
 func Hello(c echo.Context) error {
 	fmt.Println("Request handled")
-	res := &Response{
+	res := &HelloResponse{
 		Message: "Hello World!",
 	}
 	return c.JSON(http.StatusOK, res)
