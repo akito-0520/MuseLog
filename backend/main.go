@@ -12,7 +12,7 @@ func main() {
 	// ポート設定（デフォルト8080）
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = ":8080"
+		port = "8080"
 	}
 
 	// Echoインスタンスの作成
@@ -23,5 +23,5 @@ func main() {
 
 	// 起動
 	fmt.Printf("Server listening on port %s...\n", port)
-	e.Logger.Fatal(e.Start(port))
+	e.Logger.Fatal(e.Start(":" + port))
 }
