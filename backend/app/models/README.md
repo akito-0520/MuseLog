@@ -63,8 +63,14 @@ type User struct {
 
 ```go
 // db.go にヘルパー関数を定義
+
+// コンテキスト用のキー型を定義（外部からは参照されないようにする）
+type dbContextKey struct{}
+
+var dbKey = dbContextKey{}
+
 func GetDB(ctx context.Context) *gorm.DB {
-    return ctx.Value("db").(*gorm.DB)
+    return ctx.Value(dbKey).(*gorm.DB)
 }
 ```
 
