@@ -86,11 +86,15 @@ func GetUserWithPosts(ctx context.Context, userID int) (*UserWithPosts, error) {
 ### トランザクションを使った処理
 
 ```go
+type contextKey string
+
+const dbKey contextKey = "db"
+
 func TransferPoints(ctx context.Context, fromID, toID, amount int) error {
     db := models.GetDB(ctx)
     return db.Transaction(func(tx *gorm.DB) error {
         // トランザクション用のContextを作成
-        txCtx := context.WithValue(ctx, "db", tx)
+        txCtx := context.WithValue(ctx, dbKey, tx)
 
         if err := models.DeductPoints(txCtx, fromID, amount); err != nil {
             return err
