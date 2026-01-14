@@ -2,118 +2,76 @@
 
 ## 概要
 
-Serviceは、アプリケーションのビジネスロジックを担当する
-Controllerから呼び出され、Modelを利用してデータの取得・加工を行う
+Serviceは、外部APIとの連携のみを担当する
 
 ## 役割
 
-- ビジネスロジックの実装
-- 複数のModelを組み合わせた処理
-- トランザクション管理
-- 外部APIとの連携
+- 外部APIとの連携（DMM APIなど）
+- 外部サービスへのリクエスト送信とレスポンス処理
 
 ## ファイル構成
 
 ```bash
 services/
-  ├── user.go        # ユーザー関連のビジネスロジック
-  ├── post.go        # 投稿関連のビジネスロジック
-  └── auth.go        # 認証関連のビジネスロジック
+  └── dmm.go     # DMM API連携
 ```
 
 ## 規則・方針
 
 ### ファイル分割方針
 
-- 1つの機能ドメインにつき1ファイル
-- 複数のModelにまたがる処理もServiceに記述
+- 1つの外部サービスにつき1ファイル
 
 ### ファイル命名規則
 
-- ファイル名は機能ドメイン名の単数形・小文字
-- 例: ユーザー関連 → user.go、認証関連 → auth.go
+- ファイル名は外部サービス名の小文字
+- 例: DMM → dmm.go
 
 ### 関数命名規則
 
 - パスカルケースで記述（エクスポートするため）
 - 処理内容を表す動詞から始める
-- 例: `RegisterUser`, `AuthenticateUser`, `CalculateTotal`
+- 例: `FetchDMMItems`, `SearchDMMProducts`
 
 ## 実装パターン
 
-### 基本的なService関数
+仮の実装パターンなので適宜修正を加える必要があります
+
+### 外部API呼び出し
 
 ```go
-func GetUserProfile(ctx context.Context, userID int) (*UserProfile, error) {
-    // Modelからデータを取得
-    user, err := models.GetUser(ctx, userID)
+func FetchDMMItems(ctx context.Context, keyword string) (*DMMResponse, error) {
+    url := fmt.Sprintf("https://api.dmm.com/affiliate/v3/ItemList?api_id=%s&affiliate_id=%s&keyword=%s",
+        os.Getenv("DMM_API_ID"),
+        os.Getenv("DMM_AFFILIATE_ID"),
+        url.QueryEscape(keyword),
+    )
+
+    req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
     if err != nil {
         return nil, err
     }
 
-    // ビジネスロジック（データの加工など）
-    profile := &UserProfile{
-        ID:       user.ID,
-        Name:     user.Name,
-        Email:    user.Email,
-    }
-
-    return profile, nil
-}
-```
-
-### 複数Modelを組み合わせた処理
-
-```go
-func GetUserWithPosts(ctx context.Context, userID int) (*UserWithPosts, error) {
-    user, err := models.GetUser(ctx, userID)
+    resp, err := http.DefaultClient.Do(req)
     if err != nil {
         return nil, err
     }
+    defer resp.Body.Close()
 
-    posts, err := models.GetPostsByUserID(ctx, userID)
-    if err != nil {
+    var result DMMResponse
+    if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
         return nil, err
     }
 
-    return &UserWithPosts{
-        User:  user,
-        Posts: posts,
-    }, nil
-}
-```
-
-### トランザクションを使った処理
-
-```go
-type contextKey string
-
-const dbKey contextKey = "db"
-
-func TransferPoints(ctx context.Context, fromID, toID, amount int) error {
-    db := models.GetDB(ctx)
-    return db.Transaction(func(tx *gorm.DB) error {
-        // トランザクション用のContextを作成
-        txCtx := context.WithValue(ctx, dbKey, tx)
-
-        if err := models.DeductPoints(txCtx, fromID, amount); err != nil {
-            return err
-        }
-
-        if err := models.AddPoints(txCtx, toID, amount); err != nil {
-            return err
-        }
-
-        return nil
-    })
+    return &result, nil
 }
 ```
 
 ## 注意事項
 
 - HTTPリクエスト/レスポンスの処理はControllerに任せる
-- DB操作の詳細はModelに委譲する
-- Serviceは純粋なビジネスロジックに集中する
+- DB操作はModelに委譲する
+- Serviceは外部API連携のみに集中する
 
 ## 関連ドキュメント
 
