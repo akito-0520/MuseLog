@@ -73,6 +73,10 @@ jobs:
             # GHCRへログイン (pull用)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+            # 既存のコンテナを強制的に停止・削除
+            docker stop muselog-backend || true
+            docker rm muselog-backend || true
+
             # コンテナ再起動
             docker compose down
             docker compose pull
