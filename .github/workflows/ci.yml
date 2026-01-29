@@ -33,8 +33,31 @@ jobs:
         working-directory: ./backend
         run: go test -v ./...
 
-      - name: Docker build test
+      - name: Build and Push
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          push: false
+          push: true
+          tags: ghcr.io/${{ env.REPO_NAME }}:latest
+      - name: Deploy to Ubuntu
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # サーバー上のディレクトリへ移動
+            cd ~/${{ github.event.repository.name }}
+
+            # コードを最新化
+            git pull origin main
+
+            # ディレクトリの移動
+            cd backend
+
+            # GHCRへログイン (pull用)
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # コンテナ再起動
+            docker compose pull
+            docker compose up -d --remove-orphans
