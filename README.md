@@ -30,7 +30,7 @@ graph TD
     end
 
     %% バックエンド (VPS/EC2)
-    subgraph "Backend Infrastructure (さくらのVPS)"
+    subgraph "さくらのVPS"
         subgraph "Docker Host"
             GoApp["Go Backend Container<br/>(Echo Framework)"]
             style GoApp fill:#00ADD8,stroke:#333,color:white
