@@ -38,9 +38,6 @@ graph TD
         
         Nginx["Nginx<br/>(Reverse Proxy)"]
         style Nginx fill:#269539,stroke:#333,color:white
-
-        CloudWatch["CloudWatch Agent<br/>(Logs)"]
-        style CloudWatch fill:#FF4F8B,stroke:#232F3E,color:white
     end
 
     %% 外部SaaS (Supabase)
@@ -69,12 +66,16 @@ graph TD
     Nginx -->|"5. Forward"| GoApp
     
     %% 3. 処理実行
-    GoApp -.->|Log| CloudWatch
+    GoApp -.->|Log| LocalLogs
     
     %% 4. 外部連携
     GoApp -->|"6. Search"| DMM
     GoApp -->|"7. Verify & Query"| SupaDB
 
+    subgraph "Logging"
+        LocalLogs["Server Logs<br/>(stdout/stderr)"]
+        style LocalLogs fill:#666,stroke:#333,color:white
+    end
 ```
 
 ## 🧩 構成要素と役割
@@ -91,7 +92,6 @@ graph TD
 | サービス | 技術スタック | 役割・選定理由 |
 | :--- | :--- | :--- |
 | **Docker** | **Go (Echo)** | **ビジネスロジックの中枢**。<br>さくらのVPS上でGo製のWebアプリケーションをコンテナ化して実行。デプロイの再現性とポータビリティを確保する。 |
-| **CloudWatch** | - | **監視ログ**。<br>Dockerコンテナから出力されるログを収集・保存するためのエージェント。 |
 
 ### 3\. Database & Auth (SaaS)
 
