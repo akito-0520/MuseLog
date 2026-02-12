@@ -37,7 +37,7 @@ go mod download
 go run main.go
 
 # Docker起動
-docker-compose up -d
+docker compose up -d
 ```
 
 サーバーはデフォルトで8080ポートで起動します。
