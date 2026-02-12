@@ -62,13 +62,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # サーバー上のディレクトリへ移動
-            cd ~/${{ github.event.repository.name }}
+            cd ~/${{ github.event.repository.name }}/backend
 
-            # コードを最新化
-            git pull origin main
-
-            # ディレクトリの移動
-            cd backend
 
             # GHCRへログイン (pull用)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
