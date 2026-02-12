@@ -5,14 +5,19 @@ on:
     branches: [main]
     paths:
       - "backend/**"
+      - ".github/**"
       - "!backend/README.md"
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -33,8 +38,36 @@ jobs:
         working-directory: ./backend
         run: go test -v ./...
 
-      - name: Docker build test
+      - name: Lowercase Repo Name
+        run: echo "REPO_NAME=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      # 1. GHCRへログイン
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          push: false
+          push: true
+          tags: ghcr.io/${{ env.REPO_NAME }}:latest
+      - name: Deploy to Ubuntu
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # サーバー上のディレクトリへ移動
+            cd ~/${{ github.event.repository.name }}/backend
+
+
+            # GHCRへログイン (pull用)
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # コンテナ再起動
+            docker compose pull
+            docker compose up -d --remove-orphans
