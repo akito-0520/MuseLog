@@ -71,7 +71,7 @@ jobs:
             cd ~/${{ github.event.repository.name }}
 
             # コードを最新化
-            git pull origin ${{ env.BRANCH_NAME }}
+            git pull origin ${{ github.event.inputs.branch || github.ref_name }}
 
             # ディレクトリの移動
             cd backend
