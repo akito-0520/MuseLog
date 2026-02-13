@@ -36,11 +36,21 @@ go mod download
 # ローカル起動
 go run main.go
 
-# Docker起動
+# Docker起動（開発環境 - フロントエンド含む）
+docker compose --profile development up -d
+
+# Docker起動（本番環境 - バックエンドのみ）
 docker compose up -d
 ```
 
 サーバーはデフォルトで8080ポートで起動します。
+
+### 環境別のDocker起動方法
+
+- **開発環境**: フロントエンドとバックエンドの両方のコンテナが起動します
+  - `docker compose --profile development up -d`
+- **本番環境**: バックエンドのみが起動します（フロントエンドはVercelにデプロイ）
+  - `docker compose up -d`
 
 ## アーキテクチャ
 
