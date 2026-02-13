@@ -31,11 +31,11 @@ backend/
 
 ### 環境変数の設定
 
-#### 本番環境（GitHub Actions）
+#### 本番環境(GitHub Actions)
 
 本番環境では、GitHub Secretsから直接環境変数が注入されます。
 
-- GitHub Settingsで`CERTBOT_EMAIL`シークレットを設定してください
+- Repository Settings > Secrets and variables > Actions で`CERTBOT_EMAIL`シークレットを設定してください
 - デプロイ時に自動的に環境変数として渡されます
 
 ### ローカル開発
