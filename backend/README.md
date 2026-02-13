@@ -45,13 +45,7 @@ docker compose up -d
 
 サーバーはデフォルトで8080ポートで起動します。
 
-### 環境設定
-
-`.env.example`をコピーして`.env`ファイルを作成してください。
-
-```bash
-cp .env.example .env
-```
+### 環境別のDocker起動方法
 
 - **開発環境**: フロントエンドとバックエンドの両方のコンテナが起動します
   - `docker compose --profile development up -d`
