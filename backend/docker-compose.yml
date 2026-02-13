@@ -2,9 +2,21 @@ services:
   backend:
     image: ghcr.io/akito-0520/muselog:latest
     container_name: muselog-backend
-    ports:
-      - "80:8080"
+    expose:
+      - "8080"
     restart: always
+
+  nginx:
+    image: nginx:latest
+    container_name: muselog-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+    restart: always
+    depends_on:
+      - backend
+
   frontend:
     build:
       context: ../frontend

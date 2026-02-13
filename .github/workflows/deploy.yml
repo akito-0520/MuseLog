@@ -11,9 +11,14 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
+
+    env:
+      DEPLOY_FILES: "backend/docker-compose.yml,backend/nginx/conf/default.conf"
+      TARGET_DIR: "~/muselog"
 
     steps:
       - name: Checkout code
@@ -28,7 +33,7 @@ jobs:
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
-          
+
           # Dockerタグ用にブランチ名をサニタイズ
           # 1. 小文字化
           SANITIZED_BRANCH=$(echo "${BRANCH_NAME}" | tr '[:upper:]' '[:lower:]')
@@ -84,8 +89,17 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # サーバー上のディレクトリを作成（存在しない場合）
-            mkdir -p ~/muselog
+            # root所有のディレクトリがあればDockerコンテナ経由で権限を変更
+            if [ -d ~/muselog ] && [ "$(stat -c '%U' ~/muselog 2>/dev/null)" != "ubuntu" ]; then
+              docker run --rm -v ~/muselog:/data alpine chown -R $(id -u):$(id -g) /data
+            fi
+            # root所有のサブディレクトリも修正（Docker Volumeが作成したもの）
+            if [ -d ~/muselog/nginx ]; then
+              docker run --rm -v ~/muselog:/data alpine chown -R $(id -u):$(id -g) /data/nginx
+            fi
+            # ディレクトリを作成（存在しない場合）
+            mkdir -p ~/muselog/nginx/conf
+            chmod -R 755 ~/muselog
 
       # 4. docker-compose.yml をサーバーへ転送
       - name: Copy docker-compose.yml to Server
@@ -94,8 +108,8 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "backend/docker-compose.yml"
-          target: "~/muselog/"
+          source: ${{ env.DEPLOY_FILES }}
+          target: ${{ env.TARGET_DIR }}
           strip_components: 1
 
       # 5. SSHデプロイ
@@ -115,6 +129,6 @@ jobs:
             # イメージを取得してコンテナ再起動
             docker compose pull
             docker compose up -d --remove-orphans
-            
+
             # ログアウト（セキュリティのため）
             docker logout ghcr.io
