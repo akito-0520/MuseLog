@@ -29,6 +29,17 @@ backend/
 
 ## セットアップ
 
+### 環境変数の設定
+
+#### 本番環境(GitHub Actions)
+
+本番環境では、GitHub Secretsから直接環境変数が注入されます。
+
+- Repository Settings > Secrets and variables > Actions で`CERTBOT_EMAIL`シークレットを設定してください
+- デプロイ時に自動的に環境変数として渡されます
+
+### ローカル開発
+
 ```bash
 # 依存関係のインストール
 go mod download

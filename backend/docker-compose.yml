@@ -11,11 +11,31 @@ services:
     container_name: muselog-nginx
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/conf:/etc/nginx/conf.d
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     restart: always
     depends_on:
       - backend
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - nginx
+    restart: unless-stopped
+    environment:
+      - CERTBOT_EMAIL=${CERTBOT_EMAIL}
+    # Certbot renewal loop: attempts renewal every 12 hours, or obtains new certificate if none exists
+    command: >-
+      sh -c "while :; do certbot renew --webroot -w /var/www/certbot --quiet ||
+      certbot certonly --webroot -w /var/www/certbot --email $${CERTBOT_EMAIL}
+      --agree-tos --no-eff-email -d api.muselog.jp --non-interactive; sleep 12h;
+      done"
 
   frontend:
     build:

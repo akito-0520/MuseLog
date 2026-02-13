@@ -17,7 +17,7 @@ jobs:
       packages: write
 
     env:
-      DEPLOY_FILES: "backend/docker-compose.yml,backend/nginx/conf/default.conf"
+      DEPLOY_FILES: "backend/docker-compose.yml,backend/nginx"
       TARGET_DIR: "~/muselog"
 
     steps:
@@ -89,17 +89,9 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # root所有のディレクトリがあればDockerコンテナ経由で権限を変更
-            if [ -d ~/muselog ] && [ "$(stat -c '%U' ~/muselog 2>/dev/null)" != "ubuntu" ]; then
-              docker run --rm -v ~/muselog:/data alpine chown -R $(id -u):$(id -g) /data
-            fi
-            # root所有のサブディレクトリも修正（Docker Volumeが作成したもの）
-            if [ -d ~/muselog/nginx ]; then
-              docker run --rm -v ~/muselog:/data alpine chown -R $(id -u):$(id -g) /data/nginx
-            fi
-            # ディレクトリを作成（存在しない場合）
-            mkdir -p ~/muselog/nginx/conf
-            chmod -R 755 ~/muselog
+            mkdir -p ~/muselog ~/muselog/nginx ~/muselog/certbot
+            sudo chown -R ubuntu:ubuntu ~/muselog/nginx ~/muselog/docker-compose.yml ~/muselog/certbot 2>/dev/null || true
+            chmod -R 755 ~/muselog/nginx ~/muselog/certbot 2>/dev/null || true
 
       # 4. docker-compose.yml をサーバーへ転送
       - name: Copy docker-compose.yml to Server
@@ -115,16 +107,22 @@ jobs:
       # 5. SSHデプロイ
       - name: Deploy to Ubuntu
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          CERTBOT_EMAIL: ${{ secrets.CERTBOT_EMAIL }}
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: CERTBOT_EMAIL
           script: |
             # ディレクトリへ移動
             cd ~/muselog
 
             # GHCRへログイン (一時トークンによる認証)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # 環境変数をエクスポート（docker-composeで使用）
+            export CERTBOT_EMAIL="${CERTBOT_EMAIL}"
 
             # イメージを取得してコンテナ再起動
             docker compose pull
