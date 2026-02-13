@@ -89,7 +89,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            mkdir -p ~/muselog
+            mkdir -p ~/muselog ~/muselog/nginx ~/muselog/certbot
             sudo chown -R ubuntu:ubuntu ~/muselog/nginx ~/muselog/docker-compose.yml ~/muselog/certbot 2>/dev/null || true
             chmod -R 755 ~/muselog/nginx ~/muselog/certbot 2>/dev/null || true
 
