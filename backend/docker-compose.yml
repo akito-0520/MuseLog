@@ -2,8 +2,8 @@ services:
   backend:
     image: ghcr.io/akito-0520/muselog:latest
     container_name: muselog-backend
-    ports:
-      - "80:8080"
+    expose:
+      - "8080"
     restart: always
 
   nginx:
