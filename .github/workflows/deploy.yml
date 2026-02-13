@@ -23,6 +23,34 @@ jobs:
       - name: Lowercase Repo Name
         run: echo "REPO_NAME=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
+      # ブランチ名を環境変数に設定
+      - name: Set Branch Name and Docker Tag
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
+          
+          # Dockerタグ用にブランチ名をサニタイズ
+          # 1. 小文字化
+          SANITIZED_BRANCH=$(echo "${BRANCH_NAME}" | tr '[:upper:]' '[:lower:]')
+          # 2. Dockerタグで許可されていない文字を '-' に置換し、前後の '-' を削除
+          #    (小文字化後なので、[a-z0-9_.-] のみを許可)
+          SANITIZED_BRANCH=$(echo "${SANITIZED_BRANCH}" | sed -E 's/[^a-z0-9_.-]+/-/g; s/^-+//; s/-+$//')
+          # 3. すべて削除されて空になった場合のフォールバック
+          if [ -z "${SANITIZED_BRANCH}" ]; then
+            SANITIZED_BRANCH="branch"
+          fi
+          # 4. 短いコミットSHAを付与して一意性を担保しつつ、Dockerタグ長を満たすように調整
+          #    Dockerタグの最大長は128文字
+          MAX_TAG_LENGTH=128
+          SHORT_SHA="${GITHUB_SHA::7}"
+          RESERVED_LENGTH=$(( ${#SHORT_SHA} + 1 )) # '-' + SHORT_SHA
+          BASE_MAX_LENGTH=$(( MAX_TAG_LENGTH - RESERVED_LENGTH ))
+          if [ ${#SANITIZED_BRANCH} -gt ${BASE_MAX_LENGTH} ]; then
+            SANITIZED_BRANCH="${SANITIZED_BRANCH:0:${BASE_MAX_LENGTH}}"
+          fi
+          DOCKER_TAG="${SANITIZED_BRANCH}-${SHORT_SHA}"
+          echo "DOCKER_TAG=${DOCKER_TAG}" >> $GITHUB_ENV
+
       # 1. GHCRへログイン
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -31,8 +59,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. ビルド & プッシュ
+      # 2. ビルド & プッシュ (ブランチ固有タグ)
       - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ghcr.io/${{ env.REPO_NAME }}:${{ env.DOCKER_TAG }}
+
+      # 2-2. mainブランチの場合は latest タグも更新
+      - name: Build and Push latest (main only)
+        if: ${{ env.BRANCH_NAME == 'main' }}
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -50,8 +87,10 @@ jobs:
             # サーバー上のディレクトリへ移動
             cd ~/${{ github.event.repository.name }}
 
-            # コードを最新化
-            git pull origin main
+            # ブランチを取得してチェックアウト
+            git fetch origin "${{ github.ref_name }}"
+            git checkout "${{ github.ref_name }}"
+            git pull origin "${{ github.ref_name }}"
 
             # ディレクトリの移動
             cd backend
