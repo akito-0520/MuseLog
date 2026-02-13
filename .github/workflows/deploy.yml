@@ -18,7 +18,7 @@ jobs:
 
     env:
       DEPLOY_FILES: "docker-compose.yml,nginx/conf/default.conf"
-      TARGET_DIR: "~/MuseLog/backend"
+      TARGET_DIR: "~/muselog/backend"
 
     steps:
       - name: Checkout code
@@ -90,7 +90,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # サーバー上のディレクトリを作成（存在しない場合）
-            mkdir -p ~/muselog
+            mkdir -p ~/muselog/backend
 
       # 4. docker-compose.yml をサーバーへ転送
       - name: Copy docker-compose.yml to Server
@@ -112,7 +112,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # ディレクトリへ移動
-            cd ~/MuseLog/backend
+            cd ~/muselog/backend
 
             # GHCRへログイン (一時トークンによる認証)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
