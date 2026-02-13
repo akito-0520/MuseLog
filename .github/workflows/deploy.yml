@@ -95,8 +95,8 @@ jobs:
       # 4. ファイルの権限を変更
       - name: Fix file permissions
         run: |
-          chmod -R 755 nginx
-          chmod 644 docker-compose.yml
+          chmod -R 755 backend/nginx
+          chmod 644 backend/docker-compose.yml
 
       # 5. docker-compose.yml をサーバーへ転送
       - name: Copy docker-compose.yml to Server
