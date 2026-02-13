@@ -32,13 +32,15 @@ jobs:
           # Dockerタグ用にブランチ名をサニタイズ
           # 1. 小文字化
           SANITIZED_BRANCH=$(echo "${BRANCH_NAME}" | tr '[:upper:]' '[:lower:]')
-          # 2. 許可されていない文字（[^a-z0-9_.-]）を '-' に置換し、前後の '-' を削除
+          # 2. Dockerタグで許可されていない文字を '-' に置換し、前後の '-' を削除
+          #    (小文字化後なので、[a-z0-9_.-] のみを許可)
           SANITIZED_BRANCH=$(echo "${SANITIZED_BRANCH}" | sed -E 's/[^a-z0-9_.-]+/-/g; s/^-+//; s/-+$//')
           # 3. すべて削除されて空になった場合のフォールバック
           if [ -z "${SANITIZED_BRANCH}" ]; then
             SANITIZED_BRANCH="branch"
           fi
-          # 4. 短いコミットSHAを付与して一意性を担保しつつ、Dockerタグ長(最大128文字)を満たすように調整
+          # 4. 短いコミットSHAを付与して一意性を担保しつつ、Dockerタグ長を満たすように調整
+          #    Dockerタグの最大長は128文字
           MAX_TAG_LENGTH=128
           SHORT_SHA="${GITHUB_SHA::7}"
           RESERVED_LENGTH=$(( ${#SHORT_SHA} + 1 )) # '-' + SHORT_SHA
@@ -67,7 +69,7 @@ jobs:
 
       # 2-2. mainブランチの場合は latest タグも更新
       - name: Build and Push latest (main only)
-        if: env.BRANCH_NAME == 'main'
+        if: ${{ env.BRANCH_NAME == 'main' }}
         uses: docker/build-push-action@v5
         with:
           context: ./backend
