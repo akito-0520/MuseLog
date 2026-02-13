@@ -31,28 +31,12 @@ backend/
 
 ### 環境変数の設定
 
-#### ローカル開発環境
-
-ローカルでSSL証明書の取得をテストする場合は、`.env`ファイルを使用できます：
-
-1. `.env.example`をコピーして`.env`ファイルを作成します：
-   ```bash
-   cp .env.example .env
-   ```
-
-2. `.env`ファイルを編集し、必要な環境変数を設定します：
-   ```
-   CERTBOT_EMAIL=your-email@example.com
-   ```
-
 #### 本番環境（GitHub Actions）
 
-本番環境では、GitHub Secretsから直接環境変数が注入されます。`.env`ファイルは使用されません。
+本番環境では、GitHub Secretsから直接環境変数が注入されます。
 
 - GitHub Settingsで`CERTBOT_EMAIL`シークレットを設定してください
 - デプロイ時に自動的に環境変数として渡されます
-
-**注意**: `.env`ファイルはGitにコミットされません。
 
 ### ローカル開発
 
