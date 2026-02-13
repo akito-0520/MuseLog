@@ -11,9 +11,14 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
+
+    env:
+      DEPLOY_FILES: "docker-compose.yml,nginx/conf/default.conf"
+      TARGET_DIR: "~/MuseLog/backend"
 
     steps:
       - name: Checkout code
@@ -28,7 +33,7 @@ jobs:
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
-          
+
           # Dockerタグ用にブランチ名をサニタイズ
           # 1. 小文字化
           SANITIZED_BRANCH=$(echo "${BRANCH_NAME}" | tr '[:upper:]' '[:lower:]')
@@ -94,8 +99,8 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "backend/docker-compose.yml"
-          target: "~/muselog/"
+          source: ${{ env.DEPLOY_FILES }}
+          target: ${{ env.TARGET_DIR }}
           strip_components: 1
 
       # 5. SSHデプロイ
@@ -107,7 +112,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # ディレクトリへ移動
-            cd ~/muselog
+            cd ~/MuseLog/backend
 
             # GHCRへログイン (一時トークンによる認証)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -115,6 +120,6 @@ jobs:
             # イメージを取得してコンテナ再起動
             docker compose pull
             docker compose up -d --remove-orphans
-            
+
             # ログアウト（セキュリティのため）
             docker logout ghcr.io
