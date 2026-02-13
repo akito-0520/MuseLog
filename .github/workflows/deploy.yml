@@ -76,7 +76,29 @@ jobs:
           push: true
           tags: ghcr.io/${{ env.REPO_NAME }}:latest
 
-      # 3. SSHデプロイ
+      # 3. サーバー上のディレクトリを準備
+      - name: Prepare Server Directory
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # サーバー上のディレクトリを作成（存在しない場合）
+            mkdir -p ~/muselog
+
+      # 4. docker-compose.yml をサーバーへ転送
+      - name: Copy docker-compose.yml to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "backend/docker-compose.yml"
+          target: "~/muselog/"
+          strip_components: 1
+
+      # 5. SSHデプロイ
       - name: Deploy to Ubuntu
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -84,20 +106,15 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # サーバー上のディレクトリへ移動
-            cd ~/${{ github.event.repository.name }}
+            # ディレクトリへ移動
+            cd ~/muselog
 
-            # ブランチを取得してチェックアウト
-            git fetch origin "${{ github.ref_name }}"
-            git checkout "${{ github.ref_name }}"
-            git pull origin "${{ github.ref_name }}"
-
-            # ディレクトリの移動
-            cd backend
-
-            # GHCRへログイン (pull用)
+            # GHCRへログイン (一時トークンによる認証)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # コンテナ再起動
+            # イメージを取得してコンテナ再起動
             docker compose pull
             docker compose up -d --remove-orphans
+            
+            # ログアウト（セキュリティのため）
+            docker logout ghcr.io
