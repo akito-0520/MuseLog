@@ -1,8 +1,6 @@
 services:
   backend:
-    build:
-      context: ./
-      dockerfile: Dockerfile
+    image: ghcr.io/akito-0520/muselog:latest
     container_name: muselog-backend
     ports:
       - "80:8080"
