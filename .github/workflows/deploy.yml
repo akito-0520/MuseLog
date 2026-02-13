@@ -121,8 +121,8 @@ jobs:
             # GHCRへログイン (一時トークンによる認証)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # 環境変数を.envファイルに書き込み（backendディレクトリ内）
-            echo "CERTBOT_EMAIL=${CERTBOT_EMAIL}" > .env
+            # 環境変数をエクスポート（docker-composeで使用）
+            export CERTBOT_EMAIL="${CERTBOT_EMAIL}"
 
             # イメージを取得してコンテナ再起動
             docker compose pull
