@@ -89,9 +89,16 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # サーバー上のディレクトリを作成（存在しない場合）
-            mkdir -p ~/muselog
-            sudo chown -R ubuntu:ubuntu ~/muselog
+            # root所有のディレクトリがあればDockerコンテナ経由で権限を変更
+            if [ -d ~/muselog ] && [ "$(stat -c '%U' ~/muselog 2>/dev/null)" != "ubuntu" ]; then
+              docker run --rm -v ~/muselog:/data alpine chown -R $(id -u):$(id -g) /data
+            fi
+            # root所有のサブディレクトリも修正（Docker Volumeが作成したもの）
+            if [ -d ~/muselog/nginx ]; then
+              docker run --rm -v ~/muselog:/data alpine chown -R $(id -u):$(id -g) /data/nginx
+            fi
+            # ディレクトリを作成（存在しない場合）
+            mkdir -p ~/muselog/nginx/conf
             chmod -R 755 ~/muselog
 
       # 4. docker-compose.yml をサーバーへ転送
