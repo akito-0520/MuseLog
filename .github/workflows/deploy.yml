@@ -107,16 +107,22 @@ jobs:
       # 5. SSHデプロイ
       - name: Deploy to Ubuntu
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          CERTBOT_EMAIL: ${{ secrets.CERTBOT_EMAIL }}
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: CERTBOT_EMAIL
           script: |
             # ディレクトリへ移動
             cd ~/muselog
 
             # GHCRへログイン (一時トークンによる認証)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # 環境変数を.envファイルに書き込み
+            echo "CERTBOT_EMAIL=${CERTBOT_EMAIL}" > .env
 
             # イメージを取得してコンテナ再起動
             docker compose pull
