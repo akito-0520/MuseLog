@@ -6,6 +6,8 @@
 ## 既存モック
 https://www.figma.com/design/Lqi3gySmFYEnDJypmzvUCt?node-id=
 
+> **注意**: 上記FigmaリンクのノードIDは、実際のデザインファイルのIDに更新する必要があります。
+
 ## 完了条件
 - [ ] Figmaの既存モックを参照する
 - [ ] すべての画面をv0で作成する
