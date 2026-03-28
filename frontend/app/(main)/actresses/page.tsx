@@ -4,31 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Search, SlidersHorizontal, Star, Plus, User } from "lucide-react";
-
-// ── 型定義 ────────────────────────────────────────────────────
-
-interface Actress {
-  id: number;
-  name: string;
-  image_url: string | null;
-  fanza_url: string;
-}
-
-interface Review {
-  id: number;
-  actress: Actress;
-  rating: number;
-  tags: string[];
-  created_at: string;
-  updated_at: string;
-}
-
-interface ReviewsResponse {
-  reviews: Review[];
-  total: number;
-  page: number;
-  per_page: number;
-}
+import type { Review, ReviewsResponse } from "@/lib/types/review";
+import { ActressDetailModal } from "./_components/ActressDetailModal";
 
 // ── API ───────────────────────────────────────────────────────
 
@@ -51,55 +28,126 @@ async function fetchReviews(params: FetchParams): Promise<ReviewsResponse> {
   // if (!res.ok) throw new Error("データの取得に失敗しました");
   // return res.json();
 
-  // ── モックデータ（バックエンド接続まで使用） ──
-  await new Promise((r) => setTimeout(r, 300)); // ローディング確認用
+  await new Promise((r) => setTimeout(r, 300));
 
   const ALL_REVIEWS: Review[] = [
     {
       id: 1,
-      actress: { id: 1, name: "新垣 結衣", image_url: null, fanza_url: "" },
+      actress: {
+        id: 1,
+        name: "新垣 結衣",
+        image_url: null,
+        fanza_url: "",
+        height: 163,
+        bust: 82,
+        waist: 59,
+        hips: 86,
+        cup: "B",
+      },
       rating: 5.0,
       tags: ["美人", "スレンダー"],
+      memo: "代表作: 逃げるは恥だが役に立つ",
+      favorite_videos: [],
       created_at: "2023-10-24T00:00:00Z",
       updated_at: "2023-10-24T00:00:00Z",
     },
     {
       id: 2,
-      actress: { id: 2, name: "石原 さとみ", image_url: null, fanza_url: "" },
+      actress: {
+        id: 2,
+        name: "石原 さとみ",
+        image_url: null,
+        fanza_url: "",
+        height: 158,
+        bust: 83,
+        waist: 58,
+        hips: 84,
+        cup: "C",
+      },
       rating: 4.9,
       tags: ["美人", "清楚"],
+      memo: null,
+      favorite_videos: [],
       created_at: "2023-09-15T00:00:00Z",
       updated_at: "2023-09-15T00:00:00Z",
     },
     {
       id: 3,
-      actress: { id: 3, name: "橋本 環奈", image_url: null, fanza_url: "" },
+      actress: {
+        id: 3,
+        name: "橋本 環奈",
+        image_url: null,
+        fanza_url: "",
+        height: 158,
+        bust: null,
+        waist: null,
+        hips: null,
+        cup: null,
+      },
       rating: 4.8,
       tags: ["アイドル", "かわいい"],
+      memo: null,
+      favorite_videos: [],
       created_at: "2023-10-21T00:00:00Z",
       updated_at: "2023-10-21T00:00:00Z",
     },
     {
       id: 4,
-      actress: { id: 4, name: "広瀬 すず", image_url: null, fanza_url: "" },
+      actress: {
+        id: 4,
+        name: "広瀬 すず",
+        image_url: null,
+        fanza_url: "",
+        height: 163,
+        bust: 80,
+        waist: 57,
+        hips: 83,
+        cup: "B",
+      },
       rating: 4.7,
       tags: ["清楚", "スレンダー"],
+      memo: null,
+      favorite_videos: [],
       created_at: "2023-10-01T00:00:00Z",
       updated_at: "2023-10-01T00:00:00Z",
     },
     {
       id: 5,
-      actress: { id: 5, name: "有村 架純", image_url: null, fanza_url: "" },
+      actress: {
+        id: 5,
+        name: "有村 架純",
+        image_url: null,
+        fanza_url: "",
+        height: 158,
+        bust: 80,
+        waist: 57,
+        hips: 82,
+        cup: "B",
+      },
       rating: 4.6,
       tags: ["かわいい", "清楚"],
+      memo: null,
+      favorite_videos: [],
       created_at: "2023-09-20T00:00:00Z",
       updated_at: "2023-09-20T00:00:00Z",
     },
     {
       id: 6,
-      actress: { id: 6, name: "長澤 まさみ", image_url: null, fanza_url: "" },
+      actress: {
+        id: 6,
+        name: "長澤 まさみ",
+        image_url: null,
+        fanza_url: "",
+        height: 173,
+        bust: 84,
+        waist: 60,
+        hips: 87,
+        cup: "C",
+      },
       rating: 4.5,
       tags: ["美人", "スレンダー"],
+      memo: null,
+      favorite_videos: [],
       created_at: "2023-08-10T00:00:00Z",
       updated_at: "2023-08-10T00:00:00Z",
     },
@@ -159,9 +207,15 @@ function formatDate(isoString: string): string {
 
 // ── 女優カード ────────────────────────────────────────────────
 
-function ActressCard({ review }: { review: Review }) {
+function ActressCard({
+  review,
+  onClick,
+}: {
+  review: Review;
+  onClick: () => void;
+}) {
   return (
-    <div className="flex flex-col gap-2 cursor-pointer group">
+    <div className="flex flex-col gap-2 cursor-pointer group" onClick={onClick}>
       <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-[#112222]">
         {review.actress.image_url ? (
           <Image
@@ -216,6 +270,7 @@ export default function ActressesPage() {
   const [sort, setSort] = useState<SortKey>("created_at");
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [page, setPage] = useState(1);
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["reviews", { page, sort, q: query }],
@@ -228,6 +283,11 @@ export default function ActressesPage() {
   const handleQueryChange = (value: string) => {
     setQuery(value);
     setPage(1);
+  };
+
+  // TODO: バックエンド接続後は削除 mutation に差し替え
+  const handleDelete = (reviewId: number) => {
+    console.log("Delete review:", reviewId);
   };
 
   return (
@@ -291,7 +351,6 @@ export default function ActressesPage() {
 
       {/* コンテンツ */}
       <div className="px-4 py-4">
-        {/* エラー */}
         {isError && (
           <div className="flex flex-col items-center gap-3 py-24 text-center">
             <p className="text-red-400 text-sm">データの取得に失敗しました</p>
@@ -304,7 +363,6 @@ export default function ActressesPage() {
           </div>
         )}
 
-        {/* ローディング */}
         {isLoading && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -313,7 +371,6 @@ export default function ActressesPage() {
           </div>
         )}
 
-        {/* 空状態 */}
         {!isLoading && !isError && data?.reviews.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
             <User size={56} className="text-gray-700" />
@@ -327,16 +384,18 @@ export default function ActressesPage() {
           </div>
         )}
 
-        {/* グリッド */}
         {!isError && data && data.reviews.length > 0 && (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {data.reviews.map((review) => (
-                <ActressCard key={review.id} review={review} />
+                <ActressCard
+                  key={review.id}
+                  review={review}
+                  onClick={() => setSelectedReview(review)}
+                />
               ))}
             </div>
 
-            {/* ページネーション */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-8">
                 <button
@@ -381,6 +440,14 @@ export default function ActressesPage() {
       >
         <Plus size={26} strokeWidth={2.5} />
       </button>
+
+      {/* 詳細モーダル */}
+      <ActressDetailModal
+        review={selectedReview}
+        open={selectedReview !== null}
+        onClose={() => setSelectedReview(null)}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }
