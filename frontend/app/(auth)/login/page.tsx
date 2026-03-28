@@ -4,19 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Eye, EyeOff, Mail } from "lucide-react";
-
-// ── Zod スキーマ ──────────────────────────────────────────────
-
-const loginSchema = z.object({
-  email: z.email("有効なメールアドレスを入力してください"),
-  password: z.string().min(1, "パスワードを入力してください"),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
-
-// ─────────────────────────────────────────────────────────────
+import { loginSchema, type LoginFormValues } from "@/app/_libs/schemas/auth";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
