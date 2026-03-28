@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Mail } from "lucide-react";
-import { loginSchema, type LoginFormValues } from "@/app/_libs/schemas/auth";
+import { loginSchema, type LoginFormValues } from "@/lib/schemas/auth";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);

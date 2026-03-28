@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Mail, CheckCircle } from "lucide-react";
-import { signUpSchema, type SignUpFormValues } from "@/app/_libs/schemas/auth";
+import { signUpSchema, type SignUpFormValues } from "@/lib/schemas/auth";
 
 export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
