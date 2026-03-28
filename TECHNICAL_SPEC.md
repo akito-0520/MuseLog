@@ -9,8 +9,7 @@
 3. [API設計](#3-api設計)
 4. [認証・認可](#4-認証認可)
 5. [セキュリティ](#5-セキュリティ)
-6. [パフォーマンス最適化](#6-パフォーマンス最適化)
-7. [エラーハンドリング](#7-エラーハンドリング)
+6. [エラーハンドリング](#6-エラーハンドリング)
 
 ---
 
@@ -56,12 +55,10 @@
 | **Database**           | Supabase PostgreSQL     | メインデータベース          |
 | **Auth**               | Supabase Auth           | 認証・ユーザー管理          |
 | **Storage**            | Supabase Storage        | OGP画像保存                 |
-| **Cache**              | Redis (VPS上)           | APIキャッシュ、セッション   |
 | **Reverse Proxy**      | Nginx                   | SSL終端、リクエスト振り分け |
 | **Container**          | Docker / Docker Compose | コンテナ化、環境統一        |
 | **CI/CD**              | GitHub Actions          | 自動テスト・デプロイ        |
 | **Registry**           | GHCR                    | Docker イメージレジストリ   |
-| **DNS**                | Cloudflare (Optional)   | DNS管理、DDoS対策           |
 
 ---
 
@@ -781,82 +778,9 @@ if review.UserID != currentUserID {
 
 ---
 
-## 6. パフォーマンス最適化
+## 6. エラーハンドリング
 
-### 6.1 フロントエンド最適化
-
-#### Next.js最適化
-
-- **ISR (Incremental Static Regeneration)**: 一覧画面を事前生成（Phase 2）
-- **SSR**: 詳細画面を動的レンダリング
-- **Code Splitting**: Dynamic Import で必要なコンポーネントのみロード
-- **Image Optimization**: Next.js `<Image>` で自動最適化（WebP変換、lazy loading）
-
-#### React Query によるキャッシュ
-
-```typescript
-const { data } = useQuery({
-  queryKey: ["reviews", page, sort],
-  queryFn: () => fetchReviews(page, sort),
-  staleTime: 5 * 60 * 1000, // 5分間はキャッシュを使用
-});
-```
-
----
-
-### 6.2 バックエンド最適化
-
-#### データベースクエリ最適化
-
-- **インデックス**: 検索頻度の高いカラムにインデックス作成
-- **N+1問題**: GORM の `Preload` でEager Loading
-- **JOIN最適化**: 必要なカラムのみ SELECT
-
-```go
-// N+1問題の回避
-db.Preload("Actress").Preload("Tags").Find(&reviews)
-```
-
-#### Redis キャッシュ
-
-- **DMM API レスポンス**: TTL 24時間
-- **女優情報**: TTL 1時間
-- **キー設計**: `search:actresses:{query}:{page}`
-
-```go
-// キャッシュチェック
-cacheKey := fmt.Sprintf("search:actresses:%s:%d", query, page)
-cachedData, _ := redisClient.Get(ctx, cacheKey).Result()
-if cachedData != "" {
-    // キャッシュヒット
-    return json.Unmarshal(cachedData, &result)
-}
-```
-
----
-
-### 6.3 CDN・静的アセット配信
-
-- **Vercel CDN**: Next.jsの静的ファイルを自動配信
-- **Supabase Storage**: OGP画像をCDN経由で配信
-
----
-
-### 6.4 パフォーマンス目標
-
-| 項目                               | 目標値    | 計測方法        |
-| :--------------------------------- | :-------- | :-------------- |
-| **ページロード時間（初回）**       | 3秒以内   | Lighthouse      |
-| **ページロード時間（2回目以降）**  | 1秒以内   | Lighthouse      |
-| **API レスポンスタイム (95%ile)**  | 500ms以内 | APM ツール      |
-| **Time to Interactive (TTI)**      | 3.5秒以内 | Lighthouse      |
-| **Largest Contentful Paint (LCP)** | 2.5秒以内 | Core Web Vitals |
-
----
-
-## 7. エラーハンドリング
-
-### 7.1 フロントエンドエラーハンドリング
+### 6.1 フロントエンドエラーハンドリング
 
 #### エラーバウンダリ
 
@@ -890,7 +814,7 @@ try {
 
 ---
 
-### 7.2 バックエンドエラーハンドリング
+### 6.2 バックエンドエラーハンドリング
 
 #### グローバルエラーハンドラ
 
@@ -919,7 +843,7 @@ func ErrorHandler(err error, c echo.Context) {
 
 ---
 
-### 7.3 外部API エラー対応
+### 6.3 外部API エラー対応
 
 #### DMM API エラー
 

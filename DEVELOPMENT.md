@@ -25,7 +25,6 @@
 | **Docker Compose** | 2.x          | マルチコンテナ管理 |
 | **Git**            | 2.x          | バージョン管理     |
 | **PostgreSQL**     | 15+ (Docker) | ローカルDB         |
-| **Redis**          | 7+ (Docker)  | ローカルキャッシュ |
 
 ---
 
@@ -34,8 +33,8 @@
 #### 1. リポジトリクローン
 
 ```bash
-git clone https://github.com/your-org/muselog-frontend.git
-cd muselog-frontend
+git clone https://github.com/akito-0520/MuseLog.git
+cd frontend
 ```
 
 #### 2. 依存関係インストール
@@ -46,7 +45,7 @@ npm install
 
 #### 3. 環境変数設定
 
-`.env.local` ファイルを作成:
+`.env.example` ファイルをコピーして `.env.local` を作成:
 
 ```bash
 # Supabase
@@ -75,13 +74,13 @@ npm run dev
 #### 1. リポジトリクローン
 
 ```bash
-git clone https://github.com/your-org/muselog-backend.git
-cd muselog-backend
+git clone https://github.com/akito-0520/MuseLog.git
+cd backend
 ```
 
 #### 2. 環境変数設定
 
-`.env` ファイルを作成:
+`.env.example` ファイルをコピーして `.env` を作成:
 
 ```bash
 # Supabase
@@ -111,7 +110,6 @@ docker-compose -f docker-compose.dev.yml up
 
 - **Go アプリ**: ホットリロード有効（Air を使用）
 - **PostgreSQL**: ローカルDB（Supabaseの代わり）
-- **Redis**: キャッシュサーバー
 
 #### 4. マイグレーション実行
 
@@ -134,32 +132,6 @@ supabase init
 
 # ローカルSupabase起動
 supabase start
-```
-
----
-
-### 1.5 推奨エディタ設定
-
-#### VSCode 拡張機能
-
-- **ESLint**: JavaScript/TypeScript リンター
-- **Prettier**: コードフォーマッター
-- **Tailwind CSS IntelliSense**: Tailwind クラス補完
-- **Go**: Go言語サポート
-- **Docker**: Docker サポート
-
-#### VSCode 設定 (`.vscode/settings.json`)
-
-```json
-{
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "[go]": {
-    "editor.defaultFormatter": "golang.go"
-  },
-  "go.lintTool": "golangci-lint",
-  "go.testFlags": ["-v"]
-}
 ```
 
 ---
@@ -224,16 +196,20 @@ function useReviews(userId: string) {
 
 #### ディレクトリ構成
 
+以下の特性より、MVCアーキテクチャライクなアーキテクチャを選定
+
+- 基本的にCRUDがメイン
+- 外部サービスとのやり取りはDMM APIだけ
+- 認証やキーワード検索はSupabaseに投げている
+
 ```
 .
-├── main.go             # エントリポイント（Echoの起動、DB接続）
+├── main.go             # エントリポイント（Ginの起動、DB接続）
 ├── app/
-│   ├── controllers/    # リクエストの受け取り、レスポンスの返却（Echoに依存）
+│   ├── controllers/    # リクエストの受け取り、レスポンスの返却（Ginに依存）
 │   ├── services/       # ビジネスロジック、DMM APIとの通信
-│   ├── models/         # 構造体定義（DBスキーマ）
+│   ├── models/         # 構造体定義（GORM等のDBスキーマ）
 │   └── middleware/     # SupabaseのJWT認証チェック
-├── docker-compose.yml
-└── Dockerfile
 ```
 
 #### 命名規則
@@ -357,10 +333,10 @@ npx playwright test
 
 ### 4.3 テスト実施タイミング
 
-| テスト種別      | 実施タイミング   | 実施者                   |
-| :-------------- | :--------------- | :----------------------- |
-| **E2E Test**    | PRマージ前（CI） | 自動                     |
-| **Manual Test** | PR作成時         | レビュイー・レビュアー   |
+| テスト種別      | 実施タイミング   | 実施者                 |
+| :-------------- | :--------------- | :--------------------- |
+| **E2E Test**    | PRマージ前（CI） | 自動                   |
+| **Manual Test** | PR作成時         | レビュイー・レビュアー |
 
 ---
 
