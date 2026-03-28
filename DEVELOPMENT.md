@@ -214,21 +214,26 @@ function useReviews(userId: string) {
 
 ### 2.2 バックエンド (Go)
 
-#### パッケージ構成
+#### アーキテクチャ方針
+
+以下の特性より、MVCアーキテクチャライクなアーキテクチャを選定:
+
+- 基本的にCRUDがメイン
+- 外部サービスとのやり取りはDMM APIだけ
+- 認証やキーワード検索はSupabaseに委譲
+
+#### ディレクトリ構成
 
 ```
-/cmd
-  /server       # メインアプリケーション
-  /migrate      # DBマイグレーション
-/internal
-  /api          # APIハンドラー
-  /service      # ビジネスロジック
-  /repository   # データベースアクセス
-  /models       # データモデル
-  /middleware   # Echo ミドルウェア
-  /config       # 設定管理
-/pkg
-  /utils        # 汎用ユーティリティ
+.
+├── main.go             # エントリポイント（Echoの起動、DB接続）
+├── app/
+│   ├── controllers/    # リクエストの受け取り、レスポンスの返却（Echoに依存）
+│   ├── services/       # ビジネスロジック、DMM APIとの通信
+│   ├── models/         # 構造体定義（DBスキーマ）
+│   └── middleware/     # SupabaseのJWT認証チェック
+├── docker-compose.yml
+└── Dockerfile
 ```
 
 #### 命名規則
@@ -255,12 +260,18 @@ type AppError struct {
 #### ロギング
 
 ```go
-import "github.com/sirupsen/logrus"
+import "log/slog"
 
-log.WithFields(logrus.Fields{
-    "user_id": userID,
-    "action": "create_review",
-}).Info("Review created successfully")
+slog.Info("Review created successfully",
+    "user_id", userID,
+    "action", "create_review",
+)
+
+// エラーログの例
+slog.Error("Failed to fetch reviews",
+    "user_id", userID,
+    "error", err,
+)
 ```
 
 ---
@@ -312,33 +323,9 @@ hotfix/security-patch
 
 ## 4. テスト戦略
 
+小規模なアプリケーションのため、ローカルでの動作確認をレビュイーとレビュアーが実施することで品質を担保します。単体テストは採用せず、ユーザー体験の保証にはE2Eテストを活用します。
+
 ### 4.1 フロントエンドテスト
-
-#### Unit Test (Jest + React Testing Library)
-
-```typescript
-import { render, screen } from '@testing-library/react';
-import { ReviewCard } from './ReviewCard';
-
-describe('ReviewCard', () => {
-  it('should display actress name', () => {
-    const review = { actress: { name: '山田花子' }, rating: 5 };
-    render(<ReviewCard review={review} />);
-    expect(screen.getByText('山田花子')).toBeInTheDocument();
-  });
-});
-```
-
-**実行コマンド**:
-
-```bash
-npm test
-npm run test:coverage
-```
-
-**カバレッジ目標**: 70%以上
-
----
 
 #### E2E Test (Playwright)
 
@@ -364,59 +351,16 @@ npx playwright test
 
 ### 4.2 バックエンドテスト
 
-#### Unit Test (Go testing + testify)
-
-```go
-func TestCreateReview(t *testing.T) {
-    repo := &mockReviewRepository{}
-    service := NewReviewService(repo)
-
-    review, err := service.CreateReview(context.Background(), &CreateReviewInput{
-        ActressID: 1,
-        Rating: 5,
-    })
-
-    assert.NoError(t, err)
-    assert.Equal(t, 5, review.Rating)
-}
-```
-
-**実行コマンド**:
-
-```bash
-go test ./... -v
-go test ./... -cover
-```
-
-**カバレッジ目標**: 80%以上
-
----
-
-#### Integration Test
-
-```go
-func TestReviewAPI(t *testing.T) {
-    e := echo.New()
-    req := httptest.NewRequest(http.MethodPost, "/api/reviews", strings.NewReader(`{"actress_id": 1}`))
-    req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-    rec := httptest.NewRecorder()
-
-    e.ServeHTTP(rec, req)
-
-    assert.Equal(t, http.StatusCreated, rec.Code)
-}
-```
+バックエンドのテスト方針については別途検討します。基本的にはローカル動作確認とE2Eテストにより品質を担保します。
 
 ---
 
 ### 4.3 テスト実施タイミング
 
-| テスト種別           | 実施タイミング           | 実施者 |
-| :------------------- | :----------------------- | :----- |
-| **Unit Test**        | コード変更時（ローカル） | 開発者 |
-| **Integration Test** | PR作成時（CI）           | 自動   |
-| **E2E Test**         | PRマージ前（CI）         | 自動   |
-| **Manual Test**      | リリース前               | QA担当 |
+| テスト種別      | 実施タイミング   | 実施者                   |
+| :-------------- | :--------------- | :----------------------- |
+| **E2E Test**    | PRマージ前（CI） | 自動                     |
+| **Manual Test** | PR作成時         | レビュイー・レビュアー   |
 
 ---
 
