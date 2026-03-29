@@ -17,20 +17,20 @@
 
 ### 1.1 フロントエンド
 
-| カテゴリ               | 技術                         | バージョン        | 用途                                     |
-| :--------------------- | :--------------------------- | :---------------- | :--------------------------------------- |
-| **Framework**          | Next.js                      | 14.x (App Router) | React フレームワーク、SSR/SSG            |
-| **Language**           | TypeScript                   | 5.x               | 型安全性                                 |
-| **UI Library**         | React                        | 18.x              | コンポーネントベース開発                 |
-| **Styling**            | Tailwind CSS                 | 3.x               | ユーティリティファースト CSS             |
-| **UI Components**      | Radix UI                     | -                 | アクセシブルなプリミティブコンポーネント |
-| **Forms**              | React Hook Form              | 7.x               | フォーム管理                             |
-| **Validation**         | Zod                          | 3.x               | スキーマバリデーション                   |
-| **Data Fetching**      | TanStack Query (React Query) | 5.x               | サーバー状態管理                         |
-| **Auth**               | Supabase JS Client           | 2.x               | 認証・セッション管理                     |
-| **Icons**              | Lucide React                 | -                 | アイコンライブラリ                       |
-| **Notifications**      | Sonner                       | -                 | トースト通知                             |
-| **Image Optimization** | Next.js Image                | -                 | 自動画像最適化                           |
+| カテゴリ               | 技術                         | バージョン        | 用途                                            |
+| :--------------------- | :--------------------------- | :---------------- | :---------------------------------------------- |
+| **Framework**          | Next.js                      | 14.x (App Router) | React フレームワーク、SSR/SSG                   |
+| **Language**           | TypeScript                   | 5.x               | 型安全性                                        |
+| **UI Library**         | React                        | 18.x              | コンポーネントベース開発                        |
+| **Styling**            | Tailwind CSS                 | 3.x               | ユーティリティファースト CSS                    |
+| **UI Components**      | Shadcn UI                    | -                 | shadcn/uiのコンポーネントをベースにカスタマイズ |
+| **Forms**              | React Hook Form              | 7.x               | フォーム管理                                    |
+| **Validation**         | Zod                          | 3.x               | スキーマバリデーション                          |
+| **Data Fetching**      | TanStack Query (React Query) | 5.x               | サーバー状態管理                                |
+| **Auth**               | Supabase JS Client           | 2.x               | 認証・セッション管理                            |
+| **Icons**              | Lucide React                 | -                 | アイコンライブラリ                              |
+| **Notifications**      | Sonner                       | -                 | トースト通知                                    |
+| **Image Optimization** | Next.js Image                | -                 | 自動画像最適化                                  |
 
 ### 1.2 バックエンド
 
