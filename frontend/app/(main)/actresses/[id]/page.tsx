@@ -1,17 +1,17 @@
 "use client";
 
-/**
- * 女優詳細・評価編集ページ
- * 依存: react-hook-form, zod, @hookform/resolvers, @radix-ui/react-dialog
- */
-
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as Dialog from "@radix-ui/react-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   ChevronLeft,
   Star,
@@ -133,33 +133,33 @@ function DeleteConfirmDialog({
   onConfirm: () => void;
 }) {
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => !o && onCancel()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70 animate-in fade-in" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-[#112222] border border-[#1e3333] p-6 shadow-xl animate-in fade-in zoom-in-95">
-          <Dialog.Title className="text-base font-semibold text-white mb-2">
-            お気に入りから削除
-          </Dialog.Title>
-          <Dialog.Description className="text-sm text-gray-400 mb-6">
-            このお気に入りを削除しますか？この操作は元に戻せません。
-          </Dialog.Description>
-          <div className="flex gap-3 justify-end">
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 rounded-xl text-sm text-gray-300 bg-[#1a2e2e] hover:bg-[#1e3333] transition-colors"
-            >
-              キャンセル
-            </button>
-            <button
-              onClick={onConfirm}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-red-700/80 hover:bg-red-700 transition-colors"
-            >
-              削除する
-            </button>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
+      <DialogContent
+        showCloseButton={false}
+        className="w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-[#112222] border border-[#1e3333] p-6 shadow-xl"
+      >
+        <DialogTitle className="text-base font-semibold text-white mb-2">
+          お気に入りから削除
+        </DialogTitle>
+        <DialogDescription className="text-sm text-gray-400 mb-6">
+          このお気に入りを削除しますか？この操作は元に戻せません。
+        </DialogDescription>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 rounded-xl text-sm text-gray-300 bg-[#1a2e2e] hover:bg-[#1e3333] transition-colors"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-red-700/80 hover:bg-red-700 transition-colors"
+          >
+            削除する
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
