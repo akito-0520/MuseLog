@@ -23,14 +23,14 @@
 | **Language**           | TypeScript                   | 5.x                 | 型安全性                                        |
 | **UI Library**         | React                        | 19.x                | コンポーネントベース開発                        |
 | **Styling**            | Tailwind CSS                 | 4.x                 | ユーティリティファースト CSS                    |
-| **UI Components**      | Shadcn UI                    | -                 | shadcn/uiのコンポーネントをベースにカスタマイズ |
-| **Forms**              | React Hook Form              | 7.x               | フォーム管理                                    |
-| **Validation**         | Zod                          | 3.x               | スキーマバリデーション                          |
-| **Data Fetching**      | TanStack Query (React Query) | 5.x               | サーバー状態管理                                |
-| **Auth**               | Supabase JS Client           | 2.x               | 認証・セッション管理                            |
-| **Icons**              | Lucide React                 | -                 | アイコンライブラリ                              |
-| **Notifications**      | Sonner                       | -                 | トースト通知                                    |
-| **Image Optimization** | Next.js Image                | -                 | 自動画像最適化                                  |
+| **UI Components**      | Shadcn UI                    | -                   | shadcn/uiのコンポーネントをベースにカスタマイズ |
+| **Forms**              | React Hook Form              | 7.x                 | フォーム管理                                    |
+| **Validation**         | Zod                          | 3.x                 | スキーマバリデーション                          |
+| **Data Fetching**      | TanStack Query (React Query) | 5.x                 | サーバー状態管理                                |
+| **Auth**               | Supabase JS Client           | 2.x                 | 認証・セッション管理                            |
+| **Icons**              | Lucide React                 | -                   | アイコンライブラリ                              |
+| **Notifications**      | Sonner                       | -                   | トースト通知                                    |
+| **Image Optimization** | Next.js Image                | -                   | 自動画像最適化                                  |
 
 ### 1.2 バックエンド
 
@@ -732,7 +732,8 @@ SENTRY_DSN=https://xxx@sentry.io/xxx
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
-    value: "default-src 'self'; script-src 'self' 'unsafe-inline';",
+    value:
+      "default-src 'self'; script-src 'self' require-trusted-types-for 'script';",
   },
 ];
 ```
