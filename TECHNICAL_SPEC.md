@@ -145,7 +145,7 @@ CREATE TRIGGER update_actresses_updated_at
 **データ同期**:
 
 - DMM API から取得した情報は定期的に更新しない（静的データとして扱う）
-- 画像URLが切れた場合は、Supabase Storage にコピーして永続化（Phase 2）
+- 画像URLが切れた場合は、Supabase Storage にコピーして永続化
 
 ---
 

@@ -65,11 +65,6 @@ graph TD
         style DMM fill:#DDD,stroke:#333,color:black
     end
 
-    %% キャッシュ層
-    subgraph "Cache Layer (Optional)"
-        Redis["Redis<br/>(DMM API Cache)"]
-        style Redis fill:#DC382D,stroke:#333,color:white
-    end
 
     %% --- データフロー ---
 
