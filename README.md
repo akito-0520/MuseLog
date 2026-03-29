@@ -219,15 +219,17 @@ erDiagram
 
 開発環境から本番環境まで、一貫してDockerを利用します。
 
-- **本番 (Production):** さくらのVPS上で`docker-compose.prod.yml` に基づいて、Goバックエンドコンテナをサーバー上で実行します。
-- **開発 (Local):** `docker-compose.dev.yml` を使用して、本番に近い環境でアプリケーションを起動し、ホットリロードを活用して開発効率を高めます。
+- **本番 (Production):** さくらのVPS上で `backend/docker-compose.yml` に基づいて、Goバックエンドコンテナをサーバー上で実行します。
+- **開発 (Local):** 同じく `backend/docker-compose.yml` を使用して、本番に近い環境でアプリケーションを起動し、ホットリロードを活用して開発効率を高めます。
 
 ```bash
 # 開発環境起動
-docker-compose -f docker-compose.dev.yml up
+cd backend
+docker-compose up
 
-# 本番環境起動
-docker-compose -f docker-compose.prod.yml up -d
+# 本番環境起動（さくらのVPS上など）
+cd backend
+docker-compose up -d
 ```
 
 ---
