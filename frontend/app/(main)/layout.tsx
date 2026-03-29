@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { LayoutGrid, BarChart2, Settings } from "lucide-react";
+import { LayoutGrid, Search, Settings } from "lucide-react";
 
 const NAV_ITEMS = [
+  { href: "/search", label: "検索", icon: Search },
   { href: "/actresses", label: "一覧", icon: LayoutGrid },
-  { href: "/analysis", label: "分析", icon: BarChart2 },
   { href: "/settings", label: "設定", icon: Settings },
 ];
 
