@@ -113,8 +113,14 @@ docker-compose -f docker-compose.dev.yml up
 
 #### 4. マイグレーション実行
 
+プロジェクトで採用しているマイグレーション手段に応じてコマンドを実行してください。
+
 ```bash
-docker-compose exec app go run cmd/migrate/main.go
+# 例: Supabase を用いたマイグレーション
+supabase db push
+
+# 例: SQL ファイルを直接適用する場合（DATABASE_URL は適宜変更）
+psql "$DATABASE_URL" -f path/to/migrations.sql
 ```
 
 ---
