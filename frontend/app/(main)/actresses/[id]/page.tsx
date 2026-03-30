@@ -7,14 +7,7 @@ import Link from "next/link";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
   ChevronLeft,
-  Star,
   Plus,
   Trash2,
   ExternalLink,
@@ -26,29 +19,11 @@ import {
   type ReviewEditFormValues,
 } from "@/lib/schemas/review";
 import type { Review } from "@/lib/types/review";
-
-// ── 定数 ──────────────────────────────────────────────────────
-
-const AVAILABLE_TAGS = [
-  "美人",
-  "かわいい",
-  "清楚",
-  "スレンダー",
-  "グラマー",
-  "アイドル",
-  "クール",
-  "元気",
-  "癒し系",
-  "天然",
-  "セクシー",
-  "上品",
-  "笑顔",
-  "スポーティ",
-  "モデル系",
-];
-
-const MAX_TAGS = 5;
-const MAX_MEMO = 500;
+import { MAX_MEMO } from "@/lib/constants/review";
+import { SpecRow } from "@/app/(main)/_components/SpecRow";
+import { StarRatingInput } from "@/app/(main)/_components/StarRatingInput";
+import { TagSelector } from "@/app/(main)/_components/TagSelector";
+import { DeleteConfirmDialog } from "@/app/(main)/_components/DeleteConfirmDialog";
 
 // ── モックデータ ──────────────────────────────────────────────
 
@@ -121,157 +96,7 @@ function getMockReview(id: number): Review | null {
   return MOCK_REVIEWS.find((r) => r.id === id) ?? null;
 }
 
-// ── 削除確認ダイアログ ─────────────────────────────────────────
-
-function DeleteConfirmDialog({
-  open,
-  onCancel,
-  onConfirm,
-}: {
-  open: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
-      <DialogContent
-        showCloseButton={false}
-        className="w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-[#112222] border border-[#1e3333] p-6 shadow-xl"
-      >
-        <DialogTitle className="text-base font-semibold text-white mb-2">
-          お気に入りから削除
-        </DialogTitle>
-        <DialogDescription className="text-sm text-gray-400 mb-6">
-          このお気に入りを削除しますか？この操作は元に戻せません。
-        </DialogDescription>
-        <div className="flex gap-3 justify-end">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 rounded-xl text-sm text-gray-300 bg-[#1a2e2e] hover:bg-[#1e3333] transition-colors"
-          >
-            キャンセル
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-red-700/80 hover:bg-red-700 transition-colors"
-          >
-            削除する
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ── 星評価インタラクティブコンポーネント ──────────────────────
-
-function StarRatingInput({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-}) {
-  const [hovered, setHovered] = useState<number | null>(null);
-
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex gap-1.5">
-        {Array.from({ length: 5 }, (_, i) => i + 1).map((star) => {
-          const active = (hovered ?? value) >= star;
-          return (
-            <button
-              key={star}
-              type="button"
-              onClick={() => onChange(star)}
-              onMouseEnter={() => setHovered(star)}
-              onMouseLeave={() => setHovered(null)}
-              className="transition-transform hover:scale-110 active:scale-95"
-              aria-label={`${star}星`}
-            >
-              <Star
-                size={30}
-                className={
-                  active
-                    ? "text-yellow-400 fill-yellow-400"
-                    : "text-gray-700 fill-gray-700"
-                }
-              />
-            </button>
-          );
-        })}
-      </div>
-      <span className="text-yellow-400 font-semibold text-xl min-w-[2.5rem]">
-        {(hovered ?? value).toFixed(1)}
-      </span>
-    </div>
-  );
-}
-
-// ── タグセレクター ─────────────────────────────────────────────
-
-function TagSelector({
-  selected,
-  onChange,
-}: {
-  selected: string[];
-  onChange: (tags: string[]) => void;
-}) {
-  const toggleTag = (tag: string) => {
-    if (selected.includes(tag)) {
-      onChange(selected.filter((t) => t !== tag));
-    } else if (selected.length < MAX_TAGS) {
-      onChange([...selected, tag]);
-    }
-  };
-
-  return (
-    <div className="flex flex-col gap-3">
-      {/* カウンター */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-600">
-          {selected.length}/{MAX_TAGS} 個選択中
-        </span>
-      </div>
-
-      {/* タグ一覧 */}
-      <div className="flex flex-wrap gap-1.5">
-        {AVAILABLE_TAGS.map((tag) => {
-          const isSelected = selected.includes(tag);
-          const disabled = !isSelected && selected.length >= MAX_TAGS;
-          return (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => toggleTag(tag)}
-              disabled={disabled}
-              className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
-                isSelected
-                  ? "bg-[#00d4d4]/15 border-[#00d4d4]/60 text-[#00d4d4]"
-                  : disabled
-                    ? "border-[#1a2e2e] text-gray-700 cursor-not-allowed"
-                    : "border-[#1e3333] text-gray-400 hover:border-[#00d4d4]/50 hover:text-gray-200 hover:bg-[#1a2e2e]"
-              }`}
-            >
-              {isSelected ? `✓ ${tag}` : tag}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ── 小コンポーネント ──────────────────────────────────────────
-
-function SpecRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="text-gray-500 w-24 shrink-0">{label}</span>
-      <span className="text-gray-300">{value}</span>
-    </div>
-  );
-}
+// ── フォームセクション ─────────────────────────────────────────
 
 function FormSection({
   title,
@@ -456,7 +281,7 @@ export default function ActressEditPage() {
             </FormSection>
 
             {/* タグ */}
-            <FormSection title="タグ" hint={`最大${MAX_TAGS}個`}>
+            <FormSection title="タグ" hint={`最大5個`}>
               <Controller
                 control={control}
                 name="tags"

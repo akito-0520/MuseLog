@@ -6,7 +6,6 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogDescription,
   DialogClose,
 } from "@/components/ui/dialog";
 import {
@@ -19,48 +18,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { Review } from "@/lib/types/review";
-
-// ── 削除確認モーダル ──────────────────────────────────────────
-
-function DeleteConfirmDialog({
-  open,
-  onCancel,
-  onConfirm,
-}: {
-  open: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
-      <DialogContent
-        showCloseButton={false}
-        className="w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-[#112222] border border-[#1e3333] p-6 shadow-xl"
-      >
-        <DialogTitle className="text-base font-semibold text-white mb-2">
-          お気に入りから削除
-        </DialogTitle>
-        <DialogDescription className="text-sm text-gray-400 mb-6">
-          このお気に入りを削除しますか？この操作は元に戻せません。
-        </DialogDescription>
-        <div className="flex gap-3 justify-end">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 rounded-xl text-sm text-gray-300 bg-[#1a2e2e] hover:bg-[#1e3333] transition-colors"
-          >
-            キャンセル
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-red-700/80 hover:bg-red-700 transition-colors"
-          >
-            削除する
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+import { SpecRow } from "@/app/(main)/_components/SpecRow";
+import { Section } from "@/app/(main)/_components/Section";
+import { DeleteConfirmDialog } from "@/app/(main)/_components/DeleteConfirmDialog";
 
 // ── メインモーダル ────────────────────────────────────────────
 
@@ -275,33 +235,5 @@ export function ActressDetailModal({
         onConfirm={handleDelete}
       />
     </>
-  );
-}
-
-// ── 小コンポーネント ──────────────────────────────────────────
-
-function SpecRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="text-gray-500 w-20 shrink-0">{label}</span>
-      <span className="text-gray-200">{value}</span>
-    </div>
-  );
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-        {title}
-      </h3>
-      {children}
-    </div>
   );
 }
