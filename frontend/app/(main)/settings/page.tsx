@@ -267,7 +267,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-[#0a1a1a] text-white">
       {/* ヘッダー */}
-      <header className="sticky top-0 z-30 bg-[#0a1a1a]/95 backdrop-blur px-4 pt-12 pb-4">
+      <header className="sticky top-12 z-30 bg-[#0a1a1a]/95 backdrop-blur px-4 pt-3 pb-4">
         <h1 className="text-2xl font-bold">設定</h1>
       </header>
 

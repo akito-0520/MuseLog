@@ -293,7 +293,7 @@ export default function ActressesPage() {
   return (
     <div className="min-h-screen bg-[#0a1a1a] text-white">
       {/* ヘッダー */}
-      <header className="sticky top-0 z-30 bg-[#0a1a1a]/95 backdrop-blur px-4 pt-12 pb-3">
+      <header className="sticky top-12 z-30 bg-[#0a1a1a]/95 backdrop-blur px-4 pt-3 pb-3">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">お気に入り一覧</h1>
           <div className="relative">

@@ -192,7 +192,7 @@ export default function ActressEditPage() {
   return (
     <div className="min-h-screen bg-[#0a1a1a] text-white pb-36">
       {/* ヘッダー */}
-      <header className="sticky top-0 z-30 bg-[#0a1a1a]/95 backdrop-blur border-b border-[#1e3333]/60 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-12 z-30 bg-[#0a1a1a]/95 backdrop-blur border-b border-[#1e3333]/60 px-4 py-3 flex items-center gap-3">
         <Link
           href="/actresses"
           className="p-1.5 -ml-1.5 rounded-full text-gray-400 hover:text-white transition-colors"
