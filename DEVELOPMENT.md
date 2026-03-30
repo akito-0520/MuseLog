@@ -210,9 +210,9 @@ function useReviews(userId: string) {
 
 ```
 .
-├── main.go             # エントリポイント（Ginの起動、DB接続）
+├── main.go             # エントリポイント（Echoの起動、DB接続）
 ├── app/
-│   ├── controllers/    # リクエストの受け取り、レスポンスの返却（Ginに依存）
+│   ├── controllers/    # リクエストの受け取り、レスポンスの返却（Echoに依存）
 │   ├── services/       # ビジネスロジック、DMM APIとの通信
 │   ├── models/         # 構造体定義（GORM等のDBスキーマ）
 │   └── middleware/     # SupabaseのJWT認証チェック
