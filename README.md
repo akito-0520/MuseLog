@@ -81,8 +81,7 @@ graph TD
     GoApp -.->|Log| LocalLogs
 
     %% 4. 外部連携
-    GoApp -->|"6. Search (with cache)"| Redis
-    Redis -.->|Cache Miss| DMM
+    GoApp -->|"6. Search (DMM API)"| DMM
     GoApp -->|"7. Verify & Query"| SupaDB
     GoApp -->|"8. Upload OGP"| SupaStorage
 
@@ -167,10 +166,8 @@ erDiagram
         bigint id PK
         uuid user_id FK "users.id"
         bigint actress_id FK "actresses.id"
-        smallint rating
-        string favorite_video_title
-        string favorite_video_url
-        text memo
+        smallint rating "NULL許可（評価なし）"
+        text memo "最大500文字"
         datetime created_at
         datetime updated_at
         string unique_user_actress "UK: user_id + actress_id"

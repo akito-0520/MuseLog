@@ -42,7 +42,6 @@
 | **DB Driver**   | pgx                     | 5.x        | PostgreSQL ドライバー    |
 | **Validation**  | go-playground/validator | 10.x       | リクエストバリデーション |
 | **JWT**         | golang-jwt/jwt          | 5.x        | JWTトークン検証          |
-| **Cache**       | go-redis                | 9.x        | Redis クライアント       |
 | **HTTP Client** | resty                   | 2.x        | DMM API 通信             |
 | **Testing**     | testify                 | 1.x        | テストライブラリ         |
 
@@ -159,8 +158,6 @@ CREATE TABLE reviews (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   actress_id BIGINT NOT NULL REFERENCES actresses(id) ON DELETE CASCADE,
   rating SMALLINT CHECK (rating >= 1 AND rating <= 5), -- NULL許可（評価なし）
-  favorite_video_title VARCHAR(255),
-  favorite_video_url TEXT,
   memo TEXT CHECK (LENGTH(memo) <= 500), -- 最大500文字
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -170,7 +167,7 @@ CREATE TABLE reviews (
 -- Indexes
 CREATE INDEX idx_reviews_user_id ON reviews(user_id);
 CREATE INDEX idx_reviews_actress_id ON reviews(actress_id);
-CREATE INDEX idx_reviews_rating ON reviews(rating); -- 評価でソート・フィルター
+CREATE INDEX idx_reviews_rating ON reviews(rating); -- 評価でソート
 CREATE INDEX idx_reviews_created_at ON reviews(created_at DESC); -- 登録日順ソート
 
 -- Triggers
@@ -183,7 +180,11 @@ CREATE TRIGGER update_reviews_updated_at
 **制約**:
 
 - `UNIQUE(user_id, actress_id)`: 1ユーザーが同じ女優を複数回お気に入り登録できないようにする
-- `rating`: NULL許可（スキップした場合）
+- `rating`: NULL許可（評価なしで追加した場合）
+
+**お気に入り動画について**:
+
+お気に入り動画のURLはDMM APIから取得するため、DBへの永続化は不要。
 
 ---
 
@@ -395,13 +396,8 @@ CREATE POLICY "All users can view actresses" ON actresses
         "cup": "E"
       },
       "rating": 5,
-      "favorite_video_title": "タイトル",
-      "favorite_video_url": "https://...",
       "memo": "メモ",
-      "tags": [
-        { "id": 1, "name": "巨乳" },
-        { "id": 2, "name": "美人" }
-      ],
+      "tags": ["巨乳", "美人"],
       "created_at": "2024-03-01T10:00:00Z",
       "updated_at": "2024-03-10T15:30:00Z"
     }
@@ -442,20 +438,17 @@ LIMIT $5 OFFSET $6;
 {
   "actress_id": 456,
   "rating": 5,
-  "favorite_video_title": "タイトル",
-  "favorite_video_url": "https://...",
   "memo": "メモ",
-  "tag_ids": [1, 2, 3] // 既存タグのID
+  "tags": ["巨乳", "美人"]
 }
 ```
 
 **バリデーション**:
 
 - `actress_id`: 必須、存在確認
-- `rating`: 1〜5、NULL許可
-- `favorite_video_url`: URL形式チェック
+- `rating`: 1〜5、NULL許可（評価なし）
 - `memo`: 最大500文字
-- `tag_ids`: 最大5個
+- `tags`: 最大5個（タグ名の文字列配列）
 
 **処理フロー**:
 
@@ -463,8 +456,9 @@ LIMIT $5 OFFSET $6;
 2. `actress_id` が `actresses` テーブルに存在するか確認
 3. 重複チェック（`UNIQUE(user_id, actress_id)` 違反）
 4. `reviews` テーブルに INSERT
-5. `review_tags` テーブルに中間レコード INSERT
-6. レスポンス返却
+5. タグ名で `tags` テーブルの存在確認、未登録なら INSERT
+6. `review_tags` テーブルに中間レコード INSERT
+7. レスポンス返却
 
 ---
 
@@ -476,7 +470,7 @@ LIMIT $5 OFFSET $6;
 {
   "rating": 4,
   "memo": "更新後のメモ",
-  "tag_ids": [1, 3, 5] // タグを差し替え
+  "tags": ["美人", "スレンダー"]
 }
 ```
 
@@ -485,28 +479,29 @@ LIMIT $5 OFFSET $6;
 1. レビューの所有者確認（`user_id` = JWT の `sub`）
 2. `reviews` テーブルを UPDATE
 3. 既存の `review_tags` を DELETE
-4. 新しい `review_tags` を INSERT
+4. タグ名で `tags` テーブルの存在確認、未登録なら INSERT
+5. 新しい `review_tags` を INSERT
 
 ---
 
 #### 女優検索
 
-| メソッド | エンドポイント          | 説明               | 認証 |
-| :------- | :---------------------- | :----------------- | :--- |
-| GET      | `/api/search/actresses` | DMM API で女優検索 | 必須 |
+| メソッド | エンドポイント         | 説明               | 認証 |
+| :------- | :--------------------- | :----------------- | :--- |
+| GET      | `/api/dmm/actresses`   | DMM API で女優検索 | 必須 |
 
 **クエリパラメータ**:
 
 ```
-?q=山田&page=1
+?keyword=山田&page=1&per_page=20
 ```
 
 **処理フロー**:
 
-1. Redis キャッシュチェック（キー: `search:actresses:{q}:{page}`）
+1. バックエンド内のキャッシュチェック（TTL: 24時間）
 2. キャッシュヒット → 即座にレスポンス返却
 3. キャッシュミス → DMM API 呼び出し
-4. レスポンスを Redis にキャッシュ（TTL: 24時間）
+4. レスポンスをキャッシュ
 5. `actresses` テーブルに未登録の女優情報を INSERT
 6. フロントエンドにレスポンス返却
 
@@ -517,16 +512,16 @@ LIMIT $5 OFFSET $6;
   "actresses": [
     {
       "id": 456, // actresses.id (既存の場合)
-      "dmm_actress_id": "12345",
+      "id": "12345",
       "name": "山田花子",
+      "ruby": "やまだ はなこ",
       "image_url": "https://...",
       "fanza_url": "https://...",
       "bust": 88,
       "waist": 58,
-      "hip": 86,
+      "hips": 86,
       "height": 160,
-      "cup": "E",
-      "is_favorited": false // ログインユーザーがお気に入り登録済みか
+      "cup": "E"
     }
   ],
   "pagination": {
@@ -710,9 +705,6 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ... # バックエンドのみ
 DMM_API_ID=xxx
 DMM_AFFILIATE_ID=xxx
 
-# Redis
-REDIS_URL=redis://localhost:6379
-
 # Sentry
 SENTRY_DSN=https://xxx@sentry.io/xxx
 ```
@@ -750,13 +742,8 @@ const securityHeaders = [
 
 #### レート制限
 
-- **フロントエンド**: 検索入力に300msデバウンス
-- **バックエンド**: Redis + `go-redis/rate` で実装
-
-```go
-// 1ユーザーあたり 10リクエスト/分
-limiter := rate.NewLimiter(rate.Every(6*time.Second), 10)
-```
+- **フロントエンド**: 検索入力に 400ms デバウンス
+- **バックエンド**: インメモリまたはDB管理で実装（1ユーザーあたり 10リクエスト/分）
 
 ---
 
@@ -849,7 +836,7 @@ func ErrorHandler(err error, c echo.Context) {
 #### DMM API エラー
 
 - **タイムアウト**: 5秒でタイムアウト、エラーレスポンス返却
-- **レート制限**: 429エラー → Redis でリトライ制御
+- **レート制限**: 429エラー → バックエンドでリトライ制御
 - **データ不正**: 女優情報が欠損している場合はスキップ
 
 ```go
@@ -862,4 +849,4 @@ if err != nil {
 
 ---
 
-_Last Updated: 2024-03-28_
+_Last Updated: 2026-04-01_

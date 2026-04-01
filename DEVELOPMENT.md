@@ -92,9 +92,6 @@ SUPABASE_DB_URL=postgresql://postgres:password@db.xxx.supabase.co:5432/postgres
 DMM_API_ID=xxx
 DMM_AFFILIATE_ID=xxx
 
-# Redis
-REDIS_URL=redis://localhost:6379
-
 # Server
 PORT=8080
 ENV=development
@@ -356,4 +353,4 @@ npx playwright test
 
 ---
 
-_Last Updated: 2024-03-28_
+_Last Updated: 2026-04-01_

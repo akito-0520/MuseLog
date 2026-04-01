@@ -34,36 +34,32 @@ graph TD
 
     %% 一覧画面からの遷移
     Home -->|カードクリック| DetailModal[詳細モーダル]
-    Home -->|編集ボタン| Detail[女優詳細画面<br/>/actresses/:id]
-    Home -->|検索ボタン| Search[検索画面<br/>/search]
-    Home -->|設定ボタン| Settings[設定画面<br/>/settings]
+    Home -->|ボトムナビ「検索」| Search[検索画面<br/>/search]
+    Home -->|ボトムナビ「設定」| Settings[設定画面<br/>/settings]
     Home -->|ヘッダーロゴ| Home
 
     %% 詳細モーダルからの遷移
-    DetailModal -->|編集ボタン| Detail
+    DetailModal -->|編集ボタン| Detail[女優詳細・編集画面<br/>/actresses/:id]
     DetailModal -->|削除| ConfirmDelete[削除確認モーダル]
     ConfirmDelete -->|削除実行| Home
     DetailModal -->|閉じる| Home
 
     %% 検索画面からの遷移
     Search -->|追加ボタン| RatingModal[評価入力モーダル]
-    RatingModal -->|保存| Home
-    RatingModal -->|スキップ| Home
+    RatingModal -->|追加する| Search
+    RatingModal -->|キャンセル| Search
     Search -->|ヘッダーロゴ| Home
 
     %% 詳細画面からの遷移
-    Detail -->|更新ボタン| Home
+    Detail -->|更新する| Detail
     Detail -->|削除ボタン| ConfirmDelete
     Detail -->|戻るボタン| Home
 
     %% 設定画面からの遷移
-    Settings -->|プロフィール編集| Profile[プロフィール編集画面<br/>/settings/profile]
-    Settings -->|ログアウト| Logout[ログアウト処理]
+    Settings -->|ログアウト確認| LogoutConfirm[ログアウト確認ダイアログ]
+    LogoutConfirm -->|ログアウト| Logout[ログアウト処理]
     Logout --> Login
-    Settings -->|戻るボタン| Home
-
-    Profile -->|保存| Settings
-    Profile -->|キャンセル| Settings
+    Settings -->|ヘッダーロゴ| Home
 
     %% スタイル
     classDef authPage fill:#FFE5E5,stroke:#FF6B6B,stroke-width:2px
@@ -72,8 +68,8 @@ graph TD
     classDef process fill:#E5FFE5,stroke:#51CF66,stroke-width:2px
 
     class Login,SignUp,OAuth authPage
-    class Home,Search,Detail,Settings,Profile mainPage
-    class DetailModal,RatingModal,ConfirmDelete modal
+    class Home,Search,Detail,Settings mainPage
+    class DetailModal,RatingModal,ConfirmDelete,LogoutConfirm modal
     class Logout process
 ```
 
@@ -157,16 +153,15 @@ app/
 
 | パス                | ページ名           | 認証 | 説明                                                   |
 | :------------------ | :----------------- | :--- | :----------------------------------------------------- |
-| `/`                 | ルートページ       | -    | `/actresses` へ自動リダイレクト                        |
-| `/login`            | ログイン画面       | ❌   | OAuth (Google) ログイン                                |
-| `/signup`           | 新規登録画面       | ❌   | OAuth (Google) 新規登録                                |
-| `/actresses`        | 一覧画面（ホーム） | ✅   | お気に入り一覧（ページネーション・ソート・フィルター） |
-| `/actresses/:id`    | 女優詳細画面       | ✅   | レビュー編集・削除                                     |
-| `/search`           | 検索画面           | ✅   | DMM API で女優検索                                     |
-| `/settings`         | 設定画面           | ✅   | プロフィール編集、ログアウト                           |
-| `/settings/profile` | プロフィール編集   | ✅   | ニックネーム、メール、パスワード変更                   |
-| `/404`              | 404ページ          | -    | ページが見つかりません                                 |
-| `/error`            | エラーページ       | -    | サーバーエラー                                         |
+| `/`                 | ルートページ       | -    | `/actresses` へ自動リダイレクト                  |
+| `/login`            | ログイン画面       | ❌   | OAuth (Google / Apple) またはメール/PW ログイン  |
+| `/signup`           | 新規登録画面       | ❌   | OAuth (Google / Apple) またはメール/PW 新規登録  |
+| `/actresses`        | 一覧画面（ホーム） | ✅   | お気に入り一覧（ページネーション・ソート・検索） |
+| `/actresses/:id`    | 女優詳細・編集画面 | ✅   | レビュー編集・削除                               |
+| `/search`           | 検索画面           | ✅   | DMM API で女優検索・お気に入り追加               |
+| `/settings`         | 設定画面           | ✅   | メール/PW変更（モーダル）、OAuth連携、ログアウト |
+| `/404`              | 404ページ          | -    | ページが見つかりません                           |
+| `/error`            | エラーページ       | -    | サーバーエラー                                   |
 
 ---
 
@@ -178,34 +173,25 @@ app/
 /actresses?sort=created_at&order=desc&tag=巨乳&rating_min=4&q=山田
 ```
 
-| パラメータ   | 型     | 説明                                        | デフォルト   |
-| :----------- | :----- | :------------------------------------------ | :----------- |
-| `sort`       | string | ソートキー (`created_at`, `rating`, `name`) | `created_at` |
-| `order`      | string | ソート順 (`asc`, `desc`)                    | `desc`       |
-| `tag`        | string | タグ名でフィルター                          | -            |
-| `rating_min` | number | 最低評価 (1〜5)                             | -            |
-| `q`          | string | 女優名で検索                                | -            |
+| パラメータ | 型     | 説明                                                            | デフォルト   |
+| :--------- | :----- | :-------------------------------------------------------------- | :----------- |
+| `sort`     | string | ソートキー (`created_at`, `rating_desc`, `rating_asc`, `name`) | `created_at` |
+| `q`        | string | 女優名で検索（部分一致）                                        | -            |
+| `page`     | number | ページ番号                                                      | `1`          |
 
-**実装例（Next.js）**:
+**実装（TanStack Query / Client Component）**:
 
 ```typescript
-// app/actresses/page.tsx
-export default function ActressesPage({
-  searchParams,
-}: {
-  searchParams: {
-    page?: string;
-    sort?: string;
-    order?: string;
-    tag?: string;
-    rating_min?: string;
-    q?: string;
-  };
-}) {
-  const page = Number(searchParams.page) || 1;
-  const sort = searchParams.sort || "created_at";
-  // ...
-}
+// app/actresses/page.tsx（"use client"）
+const [sort, setSort] = useState<SortKey>("created_at");
+const [query, setQuery] = useState("");
+const [page, setPage] = useState(1);
+
+const { data } = useQuery({
+  queryKey: ["reviews", { page, sort, q: query }],
+  queryFn: () => fetchReviews({ page, sort, q: query }),
+  placeholderData: keepPreviousData,
+});
 ```
 
 ---
@@ -352,32 +338,31 @@ async function handleLogout() {
 
 | トリガー                   | 遷移先                              | 条件 |
 | :------------------------- | :---------------------------------- | :--- |
-| カードクリック             | 詳細モーダル（同一ページ）          | -    |
-| 詳細モーダル「編集」ボタン | `/actresses/:id`                    | -    |
-| ヘッダー「検索」ボタン     | `/search`                           | -    |
-| ヘッダー「設定」アイコン   | `/settings`                         | -    |
-| フッター「検索」タブ       | `/search`                           | -    |
-| フッター「設定」タブ       | `/settings`                         | -    |
-| ページネーション           | `/actresses?page=2`                 | -    |
-| ソート変更                 | `/actresses?sort=rating&order=desc` | -    |
+| カードクリック             | 詳細モーダル（同一ページ）  | -    |
+| 詳細モーダル「編集」ボタン | `/actresses/:id`            | -    |
+| ボトムナビ「検索」タブ     | `/search`                   | -    |
+| ボトムナビ「設定」タブ     | `/settings`                 | -    |
+| ヘッダーロゴ               | `/actresses`                | -    |
+| FABボタン（+）             | 女優追加フロー（TODO）      | -    |
+| ページネーション           | 同一ページ内で状態更新      | -    |
+| ソート変更                 | 同一ページ内で状態更新      | -    |
 
 ---
 
-### 4.4 女優詳細画面 (`/actresses/:id`)
+### 4.4 女優詳細・編集画面 (`/actresses/:id`)
 
 #### 遷移元
 
 - 一覧画面の詳細モーダル「編集」ボタン
-- 検索画面からお気に入り追加後
 
 #### 遷移先
 
-| トリガー       | 遷移先                          | 条件     |
-| :------------- | :------------------------------ | :------- |
-| 「更新」ボタン | `/actresses`                    | 更新成功 |
-| 「削除」ボタン | 削除確認モーダル → `/actresses` | 削除成功 |
-| ブラウザバック | `/actresses`                    | -        |
-| ヘッダーロゴ   | `/actresses`                    | -        |
+| トリガー           | 遷移先                          | 条件           |
+| :----------------- | :------------------------------ | :------------- |
+| 「更新する」ボタン | 同一ページ（成功トースト表示）  | 変更あり・成功 |
+| 「削除」ボタン     | 削除確認モーダル → `/actresses` | 削除成功       |
+| ヘッダー `←` ボタン | `/actresses`                   | -              |
+| ヘッダーロゴ       | `/actresses`                    | -              |
 
 **URL例**:
 
@@ -408,32 +393,19 @@ async function handleLogout() {
 
 #### 遷移元
 
-- ヘッダー「設定」アイコン
-- フッター「設定」タブ
+- ボトムナビ「設定」タブ
 
 #### 遷移先
 
-| トリガー             | 遷移先              | 条件           |
-| :------------------- | :------------------ | :------------- |
-| 「プロフィール編集」 | `/settings/profile` | -              |
-| 「ログアウト」ボタン | `/login`            | ログアウト成功 |
-| ヘッダーロゴ         | `/actresses`        | -              |
-
----
-
-### 4.7 プロフィール編集画面 (`/settings/profile`)
-
-#### 遷移元
-
-- 設定画面「プロフィール編集」
-
-#### 遷移先
-
-| トリガー             | 遷移先      | 条件     |
-| :------------------- | :---------- | :------- |
-| 「保存」ボタン       | `/settings` | 更新成功 |
-| 「キャンセル」ボタン | `/settings` | -        |
-| ブラウザバック       | `/settings` | -        |
+| トリガー                    | 遷移先                           | 条件           |
+| :-------------------------- | :------------------------------- | :------------- |
+| 「メールアドレス」行        | `EmailEditModal` 表示（同一ページ内） | -          |
+| 「パスワード」行            | `PasswordEditModal` 表示（同一ページ内） | -        |
+| OAuth「連携する」ボタン     | OAuth認証フロー（Supabase）      | -              |
+| OAuth「解除」ボタン         | 解除確認ダイアログ（同一ページ内） | -            |
+| 「ログアウト」行            | ログアウト確認ダイアログ → `/login` | 確認後        |
+| 「アカウントを削除」行      | `DeleteAccountModal` 表示        | -              |
+| ヘッダーロゴ                | `/actresses`                     | -              |
 
 ---
 
@@ -441,12 +413,16 @@ async function handleLogout() {
 
 ### 5.1 モーダル一覧
 
-| モーダル名                            | 表示元                               | 目的                       | 閉じる方法                          |
-| :------------------------------------ | :----------------------------------- | :------------------------- | :---------------------------------- |
-| **詳細モーダル**                      | 一覧画面のカードクリック             | 女優情報・評価の表示       | 背景クリック、×ボタン、ESCキー      |
-| **評価入力モーダル**                  | 検索画面「追加」ボタン               | お気に入り追加時の評価入力 | 「保存」「スキップ」ボタン、×ボタン |
-| **削除確認モーダル**                  | 詳細画面・詳細モーダル「削除」ボタン | お気に入り削除の確認       | 「キャンセル」「削除」ボタン        |
-| **ログアウト確認モーダル** (Optional) | 設定画面「ログアウト」ボタン         | ログアウトの確認           | 「キャンセル」「ログアウト」ボタン  |
+| モーダル名                 | コンポーネント          | 表示元                               | 目的                       | 閉じる方法                              |
+| :------------------------- | :---------------------- | :----------------------------------- | :------------------------- | :-------------------------------------- |
+| **詳細モーダル**           | `ActressDetailModal`    | 一覧画面のカードクリック             | 女優情報・評価の表示       | 背景クリック、×ボタン、ESCキー          |
+| **評価入力モーダル**       | `AddReviewModal`        | 検索画面「追加」ボタン               | お気に入り追加時の評価入力 | 「追加する」ボタン、「キャンセル」ボタン、×ボタン |
+| **削除確認ダイアログ**     | `DeleteConfirmDialog`   | 詳細画面・詳細モーダル「削除」ボタン | お気に入り削除の確認       | 「キャンセル」「削除」ボタン            |
+| **ログアウト確認ダイアログ** | `DeleteConfirmDialog` | 設定画面「ログアウト」行             | ログアウトの確認           | 「キャンセル」「ログアウト」ボタン      |
+| **メール変更モーダル**     | `EmailEditModal`        | 設定画面「メールアドレス」行         | メールアドレス変更         | 「保存」「キャンセル」ボタン            |
+| **パスワード変更モーダル** | `PasswordEditModal`     | 設定画面「パスワード」行             | パスワード変更             | 「保存」「キャンセル」ボタン            |
+| **アカウント削除モーダル** | `DeleteAccountModal`    | 設定画面「アカウントを削除」行       | アカウント削除の確認       | 「削除」「キャンセル」ボタン            |
+| **OAuth解除ダイアログ**   | `DeleteConfirmDialog`   | 設定画面 OAuth「解除」ボタン         | OAuth連携解除の確認        | 「解除する」「キャンセル」ボタン        |
 
 ---
 
@@ -632,63 +608,46 @@ const breadcrumbs = [
 
 ## 8. ナビゲーションコンポーネント設計
 
-### 8.1 ヘッダーナビゲーション
+### 8.1 ヘッダー（ロゴのみ）
 
 ```typescript
-// components/Header.tsx
-export function Header() {
-  const pathname = usePathname();
-
-  return (
-    <header>
-      <Link href="/actresses">
-        <Logo />
-      </Link>
-
-      <nav>
-        <Link href="/search" className={pathname === '/search' ? 'active' : ''}>
-          検索
-        </Link>
-        <Link href="/settings" className={pathname.startsWith('/settings') ? 'active' : ''}>
-          設定
-        </Link>
-      </nav>
-    </header>
-  );
-}
+// app/(main)/layout.tsx 内
+<header className="fixed top-0 left-0 right-0 z-50 h-14 ...">
+  <Link href="/actresses">
+    MuseLog💋
+  </Link>
+</header>
 ```
+
+ヘッダーにはロゴのみ配置。検索・設定へのナビゲーションはボトムナビで行う。
 
 ---
 
-### 8.2 フッターナビゲーション（モバイル）
+### 8.2 ボトムナビゲーション（全デバイス共通）
 
 ```typescript
-// components/Footer.tsx
-export function Footer() {
-  const pathname = usePathname();
+// app/(main)/layout.tsx 内
+const NAV_ITEMS = [
+  { href: "/search",    label: "検索", icon: Search     },
+  { href: "/actresses", label: "一覧", icon: LayoutGrid  },
+  { href: "/settings",  label: "設定", icon: Settings    },
+];
 
-  const navItems = [
-    { label: '一覧', href: '/actresses', icon: Home },
-    { label: '検索', href: '/search', icon: Search },
-    { label: '設定', href: '/settings', icon: Settings },
-  ];
-
-  return (
-    <footer className="md:hidden">
-      {navItems.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={pathname === item.href ? 'active' : ''}
-        >
-          <item.icon />
-          <span>{item.label}</span>
-        </Link>
-      ))}
-    </footer>
-  );
-}
+<nav className="fixed bottom-0 left-0 right-0 h-16 ...">
+  {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
+    <Link
+      key={href}
+      href={href}
+      className="flex flex-col items-center gap-0.5 ..."
+    >
+      <Icon size={22} />
+      <span className="text-xs">{label}</span>
+    </Link>
+  ))}
+</nav>
 ```
+
+アクティブ状態の判定は `usePathname()` で行う。
 
 ---
 
@@ -733,12 +692,12 @@ function ReviewCard({ review }: { review: Review }) {
 
 ### 10.1 サーバーコンポーネント vs クライアントコンポーネント
 
-| 画面             | 種別             | 理由                               |
-| :--------------- | :--------------- | :--------------------------------- |
-| `/actresses`     | Server Component | 初回データをSSRで取得、SEO対応     |
-| `/actresses/:id` | Server Component | SEO対応、OGP生成                   |
-| `/search`        | Client Component | リアルタイム検索、インタラクティブ |
-| `/settings`      | Client Component | フォーム処理、状態管理             |
+| 画面             | 種別             | 理由                                       |
+| :--------------- | :--------------- | :----------------------------------------- |
+| `/actresses`     | Client Component | TanStack Query でのソート・検索・ページネーション |
+| `/actresses/:id` | Client Component | react-hook-form、フォーム状態管理          |
+| `/search`        | Client Component | リアルタイム検索、デバウンス処理           |
+| `/settings`      | Client Component | モーダル管理、OAuth状態管理                |
 
 ---
 
@@ -777,16 +736,15 @@ export default function Loading() {
 
 ### 主要画面のパス一覧（再掲）
 
-| 画面             | パス                | 認証 |
-| :--------------- | :------------------ | :--- |
-| ログイン         | `/login`            | ❌   |
-| 新規登録         | `/signup`           | ❌   |
-| 一覧（ホーム）   | `/actresses`        | ✅   |
-| 女優詳細         | `/actresses/:id`    | ✅   |
-| 検索             | `/search`           | ✅   |
-| 設定             | `/settings`         | ✅   |
-| プロフィール編集 | `/settings/profile` | ✅   |
+| 画面             | パス             | 認証 |
+| :--------------- | :--------------- | :--- |
+| ログイン         | `/login`         | ❌   |
+| 新規登録         | `/signup`        | ❌   |
+| 一覧（ホーム）   | `/actresses`     | ✅   |
+| 女優詳細・編集   | `/actresses/:id` | ✅   |
+| 検索             | `/search`        | ✅   |
+| 設定             | `/settings`      | ✅   |
 
 ---
 
-_Last Updated: 2024-03-28_
+_Last Updated: 2026-04-01_
