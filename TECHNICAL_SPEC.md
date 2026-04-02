@@ -80,7 +80,6 @@ Supabase Auth の `auth.users` を参照する拡張テーブル。
 ```sql
 CREATE TABLE users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  nickname VARCHAR(50) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -99,7 +98,6 @@ CREATE TRIGGER update_users_updated_at
 **カラム説明**:
 
 - `id`: Supabase Auth のユーザーID（UUID）
-- `nickname`: 表示名（初期値はメールアドレスの@より前）
 - `email`: Supabase Auth と同期（重複チェック用）
 
 ---
@@ -111,10 +109,9 @@ CREATE TRIGGER update_users_updated_at
 ```sql
 CREATE TABLE actresses (
   id BIGSERIAL PRIMARY KEY,
-  dmm_actress_id VARCHAR(50) NOT NULL UNIQUE, -- DMM API の女優ID
   name VARCHAR(100) NOT NULL,
-  image_url TEXT, -- DMM or Supabase Storage の画像URL
-  fanza_url TEXT,
+  image_url TEXT, -- サムネイル画像のURL
+  fanza_url TEXT, -- 公式/アフィリエイトURL
   bust SMALLINT CHECK (bust > 0 AND bust < 200),
   waist SMALLINT CHECK (waist > 0 AND waist < 200),
   hip SMALLINT CHECK (hip > 0 AND hip < 200),
@@ -125,7 +122,6 @@ CREATE TABLE actresses (
 );
 
 -- Indexes
-CREATE UNIQUE INDEX idx_actresses_dmm_id ON actresses(dmm_actress_id);
 CREATE INDEX idx_actresses_name ON actresses(name); -- 名前検索用
 CREATE INDEX idx_actresses_cup ON actresses(cup); -- カップサイズ検索用
 
@@ -135,11 +131,6 @@ CREATE TRIGGER update_actresses_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 ```
-
-**重複防止**:
-
-- `dmm_actress_id` に UNIQUE 制約 → 同じ女優が複数回登録されるのを防止
-- お気に入り追加時、バックエンドで `dmm_actress_id` の存在チェック実施
 
 **データ同期**:
 
@@ -157,8 +148,10 @@ CREATE TABLE reviews (
   id BIGSERIAL PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   actress_id BIGINT NOT NULL REFERENCES actresses(id) ON DELETE CASCADE,
-  rating SMALLINT CHECK (rating >= 1 AND rating <= 5), -- NULL許可（評価なし）
-  memo TEXT CHECK (LENGTH(memo) <= 500), -- 最大500文字
+  rating SMALLINT CHECK (rating >= 1 AND rating <= 5), -- 1〜5の個人的評価
+  favorite_video_title VARCHAR(255), -- お気に入りの動画タイトル
+  favorite_video_url TEXT, -- お気に入りの動画URL
+  memo TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, actress_id) -- 1ユーザー1女優1レビュー
@@ -181,10 +174,6 @@ CREATE TRIGGER update_reviews_updated_at
 
 - `UNIQUE(user_id, actress_id)`: 1ユーザーが同じ女優を複数回お気に入り登録できないようにする
 - `rating`: NULL許可（評価なしで追加した場合）
-
-**お気に入り動画について**:
-
-お気に入り動画のURLはDMM APIから取得するため、DBへの永続化は不要。
 
 ---
 
@@ -302,7 +291,6 @@ CREATE POLICY "All users can view actresses" ON actresses
 
 #### バックエンドでの制約
 
-- **重複チェック**: `actresses` の `dmm_actress_id` が既存か確認してから INSERT
 - **外部キー検証**: レビュー作成時、`actress_id` が存在するか確認
 - **タグ制限**: 1レビューあたり最大5タグ（アプリケーションレベルで制限）
 
@@ -396,6 +384,8 @@ CREATE POLICY "All users can view actresses" ON actresses
         "cup": "E"
       },
       "rating": 5,
+      "favorite_video_title": "作品タイトル",
+      "favorite_video_url": "https://...",
       "memo": "メモ",
       "tags": ["巨乳", "美人"],
       "created_at": "2024-03-01T10:00:00Z",
@@ -438,6 +428,8 @@ LIMIT $5 OFFSET $6;
 {
   "actress_id": 456,
   "rating": 5,
+  "favorite_video_title": "作品タイトル",
+  "favorite_video_url": "https://...",
   "memo": "メモ",
   "tags": ["巨乳", "美人"]
 }
@@ -447,7 +439,9 @@ LIMIT $5 OFFSET $6;
 
 - `actress_id`: 必須、存在確認
 - `rating`: 1〜5、NULL許可（評価なし）
-- `memo`: 最大500文字
+- `favorite_video_title`: NULL許可
+- `favorite_video_url`: NULL許可
+- `memo`: NULL許可
 - `tags`: 最大5個（タグ名の文字列配列）
 
 **処理フロー**:
@@ -469,6 +463,8 @@ LIMIT $5 OFFSET $6;
 ```json
 {
   "rating": 4,
+  "favorite_video_title": "作品タイトル",
+  "favorite_video_url": "https://...",
   "memo": "更新後のメモ",
   "tags": ["美人", "スレンダー"]
 }
@@ -476,7 +472,7 @@ LIMIT $5 OFFSET $6;
 
 **処理フロー**:
 
-1. レビューの所有者確認（`user_id` = JWT の `sub`）
+1. レビューの所有者確認（`user_id` = JWTから取得したユーザーID）
 2. `reviews` テーブルを UPDATE
 3. 既存の `review_tags` を DELETE
 4. タグ名で `tags` テーブルの存在確認、未登録なら INSERT

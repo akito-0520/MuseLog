@@ -141,54 +141,51 @@ erDiagram
 
     users {
         uuid id PK "Supabase Auth ID"
-        string nickname
-        string email "Unique, from Supabase Auth"
-        datetime created_at
-        datetime updated_at
+        string email "Unique"
+        datetime created_at "登録日"
+        datetime updated_at "更新日"
     }
 
     actresses {
-        bigint id PK "Auto increment"
-        string dmm_actress_id "Unique, DMM API ID"
-        string name "女優名"
-        string image_url "サムネイル画像URL (DMM or Supabase Storage)"
+        bigint id PK
+        string name
+        string image_url "サムネイル画像のURL"
         string fanza_url "公式/アフィリエイトURL"
         smallint bust
         smallint waist
         smallint hip
         smallint height
         varchar(5) cup
-        datetime created_at
-        datetime updated_at
+        datetime created_at "登録日"
+        datetime updated_at "更新日"
     }
 
     reviews {
         bigint id PK
-        uuid user_id FK "users.id"
-        bigint actress_id FK "actresses.id"
-        smallint rating "NULL許可（評価なし）"
-        text memo "最大500文字"
-        datetime created_at
-        datetime updated_at
-        string unique_user_actress "UK: user_id + actress_id"
+        uuid user_id FK
+        bigint actress_id FK
+        smallint rating "1〜5の個人的評価"
+        string favorite_video_title "お気に入りの動画タイトル"
+        string favorite_video_url "お気に入りの動画URL"
+        string memo
+        datetime created_at "登録日"
+        datetime updated_at "更新日"
     }
 
     tags {
         bigint id PK
-        uuid user_id FK "users.id"
-        string name "タグ名"
-        datetime created_at
-        datetime updated_at
-        string unique_user_tag "UK: user_id + name"
+        uuid user_id FK
+        string name
+        datetime created_at "登録日"
+        datetime updated_at "更新日"
     }
 
     review_tags {
         bigint id PK
-        bigint review_id FK "reviews.id"
-        bigint tag_id FK "tags.id"
-        datetime created_at
-        datetime updated_at
-        string unique_review_tag "UK: review_id + tag_id"
+        bigint review_id FK
+        bigint tag_id FK
+        datetime created_at "登録日"
+        datetime updated_at "更新日"
     }
 ```
 
