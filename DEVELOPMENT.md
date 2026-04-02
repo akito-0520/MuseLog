@@ -147,7 +147,7 @@ supabase start
 
 - コンポーネント: PascalCase (`ReviewCard.tsx`)
 - ユーティリティ: camelCase (`formatDate.ts`)
-- ページ: kebab-case (`actress-detail.tsx`)
+- ページ (Next.js App Router): `app/**/page.tsx`（ルートセグメントのフォルダ名は kebab-case: `app/actress-detail/page.tsx`）
 
 #### コンポーネント設計
 
