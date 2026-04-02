@@ -225,10 +225,12 @@ const { data } = useQuery({
 → ログイン成功 → /actresses/:id (元のページに戻る)
 ```
 
-**実装例（Next.js Middleware）**:
+**実装予定（Next.js Middleware）**:
+
+> ⚠️ 以下は実装予定のサンプルコードです。現時点では `frontend/middleware.ts` は未実装です。
 
 ```typescript
-// middleware.ts
+// middleware.ts（実装予定）
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
