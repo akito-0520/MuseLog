@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Search, Plus, Check, X, User } from "lucide-react";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import useSWR from "swr";
 import { AddReviewModal } from "./_components/AddReviewModal";
 import type { AddReviewValues } from "./_components/AddReviewModal";
 import type { DmmActress } from "@/lib/types/actress";
@@ -315,12 +315,13 @@ export default function SearchPage() {
     setPage(1);
   };
 
-  const { data, isLoading, isError, isFetching } = useQuery({
-    queryKey: ["dmm-actresses", { keyword, page }],
-    queryFn: () => searchActresses(keyword, page),
-    placeholderData: keepPreviousData,
-    enabled: keyword.trim().length > 0,
-  });
+  const { data, isLoading, error, isValidating } = useSWR(
+    keyword.trim().length > 0 ? ["dmm-actresses", keyword, page] : null,
+    ([, keyword, page]) => searchActresses(keyword, page as number),
+    { keepPreviousData: true }
+  );
+  const isError = !!error;
+  const isFetching = isValidating && !!data;
 
   const totalPages = data ? Math.ceil(data.total / PER_PAGE) : 0;
 

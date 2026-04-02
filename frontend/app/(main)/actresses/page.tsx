@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import useSWR from "swr";
 import { Search, SlidersHorizontal, Star, Plus, User } from "lucide-react";
 import type { Review, ReviewsResponse } from "@/lib/types/review";
 import { ActressDetailModal } from "./_components/ActressDetailModal";
@@ -272,11 +272,12 @@ export default function ActressesPage() {
   const [page, setPage] = useState(1);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["reviews", { page, sort, q: query }],
-    queryFn: () => fetchReviews({ page, sort, q: query }),
-    placeholderData: keepPreviousData,
-  });
+  const { data, isLoading, error } = useSWR(
+    ["reviews", page, sort, query],
+    ([, page, sort, q]) => fetchReviews({ page, sort: sort as SortKey, q }),
+    { keepPreviousData: true }
+  );
+  const isError = !!error;
 
   const totalPages = data ? Math.ceil(data.total / PER_PAGE) : 0;
 
