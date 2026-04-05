@@ -1,0 +1,4 @@
+[tools]
+go = "1.26.0"
+node = "20"
+supabase = "2.84.2"
