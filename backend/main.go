@@ -2,10 +2,12 @@ package main
 
 import (
 	"backend/app/controllers"
+	"backend/app/models"
 	"fmt"
 	"os"
 
 	"github.com/labstack/echo/v4"
+	"log/slog"
 )
 
 func main() {
@@ -13,6 +15,13 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	// dbの初期化
+	_, err := models.InitDB()
+	if err != nil {
+		slog.Error("failed to connect db", "error", err)
+		os.Exit(1)
 	}
 
 	// Echoインスタンスの作成
