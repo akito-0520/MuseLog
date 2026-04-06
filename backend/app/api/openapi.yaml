@@ -1,0 +1,15 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: MuseLog API
+paths:
+  /api/v1/actresses:
+    get:
+      operationId: getActresses
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#components/schemas/Actress"
