@@ -1,3 +1,5 @@
 # Certbot certificates and temporary files
 certbot/conf/
 certbot/www/
+
+.env
